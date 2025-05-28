@@ -22,10 +22,6 @@ from telegram.ext import (
     filters,
 )
 
-# ─── Load environment variables ───────────────
-load_dotenv()
-TOKEN = os.getenv("TELEGRAM_TOKEN")
-
 # ─── Enable logging (optional but helpful) ────
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -45,13 +41,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 # ─── Build the application ────────────────────
-app = ApplicationBuilder().token(TOKEN).build()
-app.add_handler(CommandHandler("start", start))
 
-# ─── Run with polling ─────────────────────────
-if __name__ == "__main__":
-    print("🤖 Bot is running...")
-    app.run_polling()
+# Handlers are added after the app is created in the setup_handlers function.
 
 
 def generate_discount_code():
@@ -775,9 +766,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
-app = ApplicationBuilder().token(TOKEN).build()
-
-
 # ─── Handler Setup Function ───────────────────────
 def setup_handlers(app):
     # Commands
@@ -839,5 +827,6 @@ if __name__ == "__main__":
         port=int(os.environ.get("PORT", 10000)),
         webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}"
     )
+
 
 
