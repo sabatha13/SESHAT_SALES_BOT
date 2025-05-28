@@ -1,5 +1,11 @@
 import logging
 import re
+import os
+import random
+import string
+from datetime import datetime, timedelta
+
+from dotenv import load_dotenv
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder, CommandHandler, CallbackQueryHandler,
@@ -7,17 +13,9 @@ from telegram.ext import (
 )
 from telegram.constants import ParseMode
 
-import os
-import os
-import random
-import string
-from datetime import datetime, timedelta
-
-from dotenv import load_dotenv
-
+# 🔐 Charger les variables d’environnement (.env)
 load_dotenv()
 
-load_dotenv()
 
 def generate_discount_code():
     prefixes = ["ASU", "TEMPLE", "INITIÉ", "SAGESSE", "ÉCLAT", "LUMIÈRE", "HARMONIE", "ARCANE"]
@@ -633,11 +631,15 @@ async def handle_faq_contact(update: Update, context: ContextTypes.DEFAULT_TYPE)
     await update.callback_query.edit_message_text(
         text=(
             "📞 <b>Comment poser une question personnelle ?</b>\n\n"
-            "<i>Contactez-nous via WhatsApp au +1 954 663 8783 pour toute demande spécifique.</i>"
+            "<i>Contactez-nous directement via WhatsApp :</i>\n"
+            "<a href='https://wa.me/19546638783'>https://wa.me/19546638783</a>"
         ),
         parse_mode=ParseMode.HTML,
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔙 Retour au FAQ", callback_data="fr_FAQ")]])
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Retour au FAQ", callback_data="fr_FAQ")]
+        ])
     )
+
 
 async def handle_faq_livraison(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.callback_query.answer()
@@ -736,7 +738,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
-app = ApplicationBuilder().token("8020664865:AAEOpRY0gxx2CIDJMEeNIksD06XTrTwSzDU").build()
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+app = ApplicationBuilder().token(TOKEN).build()
+
 
 # Command
 app.add_handler(CommandHandler("start", start))
@@ -786,5 +790,29 @@ app.add_handler(CallbackQueryHandler(handle_coaching_avance, pattern="^coaching_
 # Email/text capture (must come last)
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
+def setup_handlers(app):
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(handle_start_menu, pattern="^start_menu$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_remise, pattern="^fr_Remise$"))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-app.run_polling()
+    # Ajoute ici tous les autres handlers comme :
+    # app.add_handler(CallbackQueryHandler(handle_fr_cours, pattern="^fr_Cours$"))
+    # app.add_handler(CallbackQueryHandler(handle_fr_seminaires, pattern="^fr_Seminaires$"))
+    # etc.
+
+
+if __name__ == "__main__":
+    TOKEN = os.getenv("TELEGRAM_TOKEN")
+    WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+
+    app = ApplicationBuilder().token(TOKEN).build()
+    setup_handlers(app)
+
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 10000)),
+        webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}"
+    )
+
+
