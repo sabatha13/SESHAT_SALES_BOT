@@ -34,7 +34,15 @@ logging.basicConfig(
 
 # ─── Command handler ──────────────────────────
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("Hello from test!")
+    await update.message.reply_text(
+        text=(
+            "🏠 <b>Menu Principal :</b>\n\n"
+            "Choisissez une option ci-dessous :"
+        ),
+        parse_mode=ParseMode.HTML,
+        reply_markup=main_menu()
+    )
+
 
 # ─── Build the application ────────────────────
 app = ApplicationBuilder().token(TOKEN).build()
