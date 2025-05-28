@@ -1,20 +1,49 @@
-import logging
-import re
+# ─── Standard Library ─────────────────────────────
 import os
+import json
 import random
 import string
+import logging
 from datetime import datetime, timedelta
 
+# ─── Third-Party Libraries ────────────────────────
 from dotenv import load_dotenv
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    ApplicationBuilder, CommandHandler, CallbackQueryHandler,
-    MessageHandler, ContextTypes, filters
-)
+
+# ─── Telegram Bot API ─────────────────────────────
+from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.constants import ParseMode
 
-# 🔐 Charger les variables d’environnement (.env)
+from telegram.ext import (
+    ApplicationBuilder,
+    CommandHandler,
+    CallbackQueryHandler,
+    MessageHandler,
+    ContextTypes,
+    filters,
+)
+
+# ─── Load environment variables ───────────────
 load_dotenv()
+TOKEN = os.getenv("TELEGRAM_TOKEN")
+
+# ─── Enable logging (optional but helpful) ────
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
+
+# ─── Command handler ──────────────────────────
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text("Hello from test!")
+
+# ─── Build the application ────────────────────
+app = ApplicationBuilder().token(TOKEN).build()
+app.add_handler(CommandHandler("start", start))
+
+# ─── Run with polling ─────────────────────────
+if __name__ == "__main__":
+    print("🤖 Bot is running...")
+    app.run_polling()
 
 
 def generate_discount_code():
@@ -738,71 +767,59 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 from telegram.ext import ApplicationBuilder, CommandHandler, CallbackQueryHandler, MessageHandler, filters
 
-TOKEN = os.getenv("TELEGRAM_TOKEN")
 app = ApplicationBuilder().token(TOKEN).build()
 
 
-# Command
-app.add_handler(CommandHandler("start", start))
-app.add_handler(CommandHandler("code", show_user_code))
-app.add_handler(CommandHandler("faq", handle_fr_faq))
-app.add_handler(CallbackQueryHandler(handle_start_menu, pattern="^start_menu$"))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-app.add_handler(CallbackQueryHandler(handle_reseaux_sociaux, pattern="^fr_reseaux$"))
-app.add_handler(CallbackQueryHandler(handle_donation, pattern="^fr_donation$"))
-
-
-
-
-# Menu button callbacks
-app.add_handler(CallbackQueryHandler(handle_fr_livres, pattern="^fr_Livres$"))
-app.add_handler(CallbackQueryHandler(handle_fr_cours, pattern="^fr_Cours$"))
-app.add_handler(CallbackQueryHandler(handle_fr_videos, pattern="^fr_Videos$"))
-app.add_handler(CallbackQueryHandler(handle_fr_seminaires, pattern="^fr_Seminaires$"))
-app.add_handler(CallbackQueryHandler(handle_fr_faq, pattern="^fr_FAQ$"))
-app.add_handler(CallbackQueryHandler(handle_fr_remise, pattern="^fr_Remise$"))
-app.add_handler(CallbackQueryHandler(handle_fr_agent, pattern="^fr_Agent$"))
-app.add_handler(CallbackQueryHandler(handle_fr_faq, pattern="^fr_FAQ$"))
-app.add_handler(CallbackQueryHandler(handle_faq_acces, pattern="^faq_acces$"))
-app.add_handler(CallbackQueryHandler(handle_faq_paiement, pattern="^faq_paiement$"))
-app.add_handler(CallbackQueryHandler(handle_faq_plateformes, pattern="^faq_plateformes$"))
-app.add_handler(CallbackQueryHandler(handle_faq_dates, pattern="^faq_dates$"))
-app.add_handler(CallbackQueryHandler(handle_faq_accompagnement, pattern="^faq_accompagnement$"))
-app.add_handler(CallbackQueryHandler(handle_faq_international, pattern="^faq_international$"))
-app.add_handler(CallbackQueryHandler(handle_faq_contact, pattern="^faq_contact$"))
-app.add_handler(CallbackQueryHandler(handle_faq_livraison, pattern="^faq_livraison$"))
-app.add_handler(CallbackQueryHandler(handle_faq_inscription, pattern="^faq_inscription$"))
-app.add_handler(CallbackQueryHandler(handle_faq_videos, pattern="^faq_videos$"))
-app.add_handler(CallbackQueryHandler(handle_fr_remise, pattern="^fr_Remise$"))
-app.add_handler(CallbackQueryHandler(handle_fr_ressources, pattern="^fr_ressources$"))
-app.add_handler(CallbackQueryHandler(handle_fr_coaching, pattern="^fr_coaching$"))
-app.add_handler(CallbackQueryHandler(handle_ressources_audios, pattern="^ressources_audios$"))
-app.add_handler(CallbackQueryHandler(handle_ressources_articles, pattern="^ressources_articles$"))
-app.add_handler(CallbackQueryHandler(handle_ressources_bio, pattern="^ressources_bio$"))
-app.add_handler(CallbackQueryHandler(handle_ressources_livres, pattern="^ressources_livres$"))
-app.add_handler(CallbackQueryHandler(handle_ressources_videos, pattern="^ressources_videos$"))
-app.add_handler(CallbackQueryHandler(handle_ressources_references, pattern="^ressources_references$"))
-app.add_handler(CallbackQueryHandler(handle_coaching_standard, pattern="^coaching_standard$"))
-app.add_handler(CallbackQueryHandler(handle_coaching_intermediaire, pattern="^coaching_intermediaire$"))
-app.add_handler(CallbackQueryHandler(handle_coaching_avance, pattern="^coaching_avance$"))
-
-
-# Email/text capture (must come last)
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
+# ─── Handler Setup Function ───────────────────────
 def setup_handlers(app):
+    # Commands
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("code", show_user_code))
+    app.add_handler(CommandHandler("faq", handle_fr_faq))
+
+    # Menu navigation
     app.add_handler(CallbackQueryHandler(handle_start_menu, pattern="^start_menu$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_livres, pattern="^fr_Livres$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_cours, pattern="^fr_Cours$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_videos, pattern="^fr_Videos$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_seminaires, pattern="^fr_Seminaires$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_faq, pattern="^fr_FAQ$"))
     app.add_handler(CallbackQueryHandler(handle_fr_remise, pattern="^fr_Remise$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_agent, pattern="^fr_Agent$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_ressources, pattern="^fr_ressources$"))
+    app.add_handler(CallbackQueryHandler(handle_fr_coaching, pattern="^fr_coaching$"))
+    app.add_handler(CallbackQueryHandler(handle_reseaux_sociaux, pattern="^fr_reseaux$"))
+    app.add_handler(CallbackQueryHandler(handle_donation, pattern="^fr_donation$"))
+
+    # Submenus
+    app.add_handler(CallbackQueryHandler(handle_ressources_audios, pattern="^ressources_audios$"))
+    app.add_handler(CallbackQueryHandler(handle_ressources_articles, pattern="^ressources_articles$"))
+    app.add_handler(CallbackQueryHandler(handle_ressources_bio, pattern="^ressources_bio$"))
+    app.add_handler(CallbackQueryHandler(handle_ressources_livres, pattern="^ressources_livres$"))
+    app.add_handler(CallbackQueryHandler(handle_ressources_videos, pattern="^ressources_videos$"))
+    app.add_handler(CallbackQueryHandler(handle_ressources_references, pattern="^ressources_references$"))
+
+    app.add_handler(CallbackQueryHandler(handle_coaching_standard, pattern="^coaching_standard$"))
+    app.add_handler(CallbackQueryHandler(handle_coaching_intermediaire, pattern="^coaching_intermediaire$"))
+    app.add_handler(CallbackQueryHandler(handle_coaching_avance, pattern="^coaching_avance$"))
+
+    app.add_handler(CallbackQueryHandler(handle_faq_acces, pattern="^faq_acces$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_paiement, pattern="^faq_paiement$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_plateformes, pattern="^faq_plateformes$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_dates, pattern="^faq_dates$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_accompagnement, pattern="^faq_accompagnement$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_international, pattern="^faq_international$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_contact, pattern="^faq_contact$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_livraison, pattern="^faq_livraison$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_inscription, pattern="^faq_inscription$"))
+    app.add_handler(CallbackQueryHandler(handle_faq_videos, pattern="^faq_videos$"))
+
+    # Email entry
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Ajoute ici tous les autres handlers comme :
-    # app.add_handler(CallbackQueryHandler(handle_fr_cours, pattern="^fr_Cours$"))
-    # app.add_handler(CallbackQueryHandler(handle_fr_seminaires, pattern="^fr_Seminaires$"))
-    # etc.
-
-
+# ─── Entry Point for Render ───────────────────────
 if __name__ == "__main__":
+    load_dotenv()
     TOKEN = os.getenv("TELEGRAM_TOKEN")
     WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
