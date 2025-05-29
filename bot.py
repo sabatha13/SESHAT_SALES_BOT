@@ -815,6 +815,9 @@ def setup_handlers(app):
 
 # ─── Entry Point for Render ───────────────────────
 if __name__ == "__main__":
+    import asyncio
+    from dotenv import load_dotenv
+
     load_dotenv()
     TOKEN = os.getenv("TELEGRAM_TOKEN")
     WEBHOOK_URL = os.getenv("WEBHOOK_URL")
@@ -822,20 +825,19 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     setup_handlers(app)
 
-    # Register the webhook URL with Telegram
     async def main():
-        await app.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
         await app.initialize()
+        await app.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
         await app.start()
-        await app.updater.start_polling()
         await app.run_webhook(
             listen="0.0.0.0",
             port=int(os.environ.get("PORT", 10000)),
-            webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}",
+            webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}"
         )
 
-    import asyncio
     asyncio.run(main())
+
+
 
 
 
