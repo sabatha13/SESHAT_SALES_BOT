@@ -8,8 +8,6 @@ from datetime import datetime, timedelta
 import asyncio  # Needed for nested event loop
 
 # ─── Fix for Windows / VS Code Async Loop ────────
-import nest_asyncio
-nest_asyncio.apply()
 
 # ─── Third-Party Libraries ────────────────────────
 from dotenv import load_dotenv
@@ -833,6 +831,8 @@ if __name__ == "__main__":
         await app.run_polling()
 
     asyncio.run(main())
+
+
 
 
 
