@@ -822,11 +822,21 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     setup_handlers(app)
 
-    app.run_webhook(
-        listen="0.0.0.0",
-        port=int(os.environ.get("PORT", 10000)),
-        webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}"
-    )
+    # Register the webhook URL with Telegram
+    async def main():
+        await app.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling()
+        await app.run_webhook(
+            listen="0.0.0.0",
+            port=int(os.environ.get("PORT", 10000)),
+            webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}",
+        )
+
+    import asyncio
+    asyncio.run(main())
+
 
 
 
