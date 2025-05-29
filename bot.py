@@ -5,6 +5,11 @@ import random
 import string
 import logging
 from datetime import datetime, timedelta
+import asyncio  # Needed for nested event loop
+
+# ─── Fix for Windows / VS Code Async Loop ────────
+import nest_asyncio
+nest_asyncio.apply()
 
 # ─── Third-Party Libraries ────────────────────────
 from dotenv import load_dotenv
@@ -21,6 +26,7 @@ from telegram.ext import (
     ContextTypes,
     filters,
 )
+
 
 # ─── Enable logging (optional but helpful) ────
 logging.basicConfig(
@@ -819,22 +825,15 @@ if __name__ == "__main__":
 
     load_dotenv()
     TOKEN = os.getenv("TELEGRAM_TOKEN")
-    WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
     app = ApplicationBuilder().token(TOKEN).build()
     setup_handlers(app)
 
     async def main():
-        await app.initialize()
-        await app.bot.set_webhook(f"{WEBHOOK_URL}/webhook/{TOKEN}")
-        await app.start()
-        await app.run_webhook(
-            listen="0.0.0.0",
-            port=int(os.environ.get("PORT", 10000)),
-            webhook_url=f"{WEBHOOK_URL}/webhook/{TOKEN}"
-        )
+        await app.run_polling()
 
     asyncio.run(main())
+
 
 
 
