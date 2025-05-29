@@ -297,14 +297,13 @@ async def handle_ressources_livres(update: Update, context: ContextTypes.DEFAULT
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    logging.info(f"Received /start from user {update.effective_user.id}")
     await update.message.reply_text(
-        text=(
-            "👋 <b>Bienvenue chez Seshat Assistant !</b>\n\n"
-            "Veuillez choisir une option ci-dessous pour commencer :"
-        ),
+        text="👋 <b>Bienvenue chez Seshat Assistant !</b>\n\nVeuillez choisir une option ci-dessous pour commencer :",
         reply_markup=main_menu(),
         parse_mode=ParseMode.HTML
     )
+
 
 import os
 import json
