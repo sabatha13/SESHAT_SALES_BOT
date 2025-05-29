@@ -818,8 +818,8 @@ def setup_handlers(app):
 
 # ─── Entry Point for Render ───────────────────────
 if __name__ == "__main__":
-    import asyncio
     from dotenv import load_dotenv
+    import os
 
     load_dotenv()
     TOKEN = os.getenv("TELEGRAM_TOKEN")
@@ -827,10 +827,9 @@ if __name__ == "__main__":
     app = ApplicationBuilder().token(TOKEN).build()
     setup_handlers(app)
 
-    async def main():
-        await app.run_polling()
+    # 🚫 DO NOT wrap in asyncio.run(...)
+    app.run_polling()  # ⬅️ Direct call, no 'await'
 
-    asyncio.run(main())
 
 
 
