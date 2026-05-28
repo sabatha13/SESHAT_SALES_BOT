@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <ClerkProvider localization={frFR} appearance={{
+    <ClerkProvider localization={frFR as any} appearance={{
       variables: {
         colorPrimary: '#D4AF37',
         colorBackground: '#0D0D0F',
