@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'
+﻿export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { stripe } from '@/lib/stripe/client';
@@ -106,4 +106,5 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
+
 
