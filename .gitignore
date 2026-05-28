@@ -1,3 +1,10 @@
 remises.json
 .env
+.env.local
+.env.*.local
 __pycache__/
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
