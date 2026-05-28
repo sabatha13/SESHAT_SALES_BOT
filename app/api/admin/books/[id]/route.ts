@@ -2,11 +2,15 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
 
 export async function GET() {
   return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
+}
+
+async function getAuth() {
+  const { auth } = await import('@clerk/nextjs/server');
+  return auth();
 }
 
 async function assertAdmin(clerkUserId: string) {
@@ -17,7 +21,7 @@ async function assertAdmin(clerkUserId: string) {
 
 export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuth();
     if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     await assertAdmin(userId);
 
@@ -69,7 +73,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
 export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuth();
     if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     await assertAdmin(userId);
 
