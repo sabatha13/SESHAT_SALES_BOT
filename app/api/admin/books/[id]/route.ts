@@ -1,109 +1,78 @@
-﻿export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { stripe } from '@/lib/stripe/client';
+import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
 
-export async function POST(req: NextRequest) {
+async function assertAdmin(clerkUserId: string) {
+  const supabase = createServerClient();
+  const { data } = await supabase.from('profiles').select('is_admin').eq('clerk_user_id', clerkUserId).single();
+  if (!data?.is_admin) throw new Error('Accès refusé');
+}
+
+export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const { userId } = await auth();
-    if (!userId) {
-      return NextResponse.json({ error: 'Non authentifiÃ©' }, { status: 401 });
-    }
-
-    const { bookId } = await req.json();
-    if (!bookId) {
-      return NextResponse.json({ error: 'bookId requis' }, { status: 400 });
-    }
+    if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    await assertAdmin(userId);
 
     const supabase = createServerClient();
+    const fd = await req.formData();
 
-    // Get book
-    const { data: book, error: bookError } = await supabase
+    const updates: Record<string, any> = {
+      title: fd.get('title'),
+      author: fd.get('author'),
+      description: fd.get('description'),
+      short_description: fd.get('short_description'),
+      price: Math.round(parseFloat(fd.get('price') as string) * 100),
+      category: fd.get('category'),
+      tags: (fd.get('tags') as string).split(',').map(t => t.trim()).filter(Boolean),
+      page_count: parseInt(fd.get('page_count') as string) || 0,
+      language: fd.get('language'),
+      is_featured: fd.get('is_featured') === 'true',
+      is_published: fd.get('is_published') === 'true',
+    };
+
+    const pdfFile = fd.get('pdf') as File | null;
+    if (pdfFile && pdfFile.size > 0) {
+      const pdfName = `${Date.now()}-${pdfFile.name.replace(/\s+/g, '_')}`;
+      await supabase.storage.from('pdfs').upload(pdfName, pdfFile, { contentType: 'application/pdf' });
+      updates.pdf_path = pdfName;
+    }
+
+    const coverFile = fd.get('cover') as File | null;
+    if (coverFile && coverFile.size > 0) {
+      const coverName = `${Date.now()}-${coverFile.name.replace(/\s+/g, '_')}`;
+      await supabase.storage.from('covers').upload(coverName, coverFile, { contentType: coverFile.type });
+      const { data: { publicUrl } } = supabase.storage.from('covers').getPublicUrl(coverName);
+      updates.cover_url = publicUrl;
+    }
+
+    const { data, error } = await supabase
       .from('books')
-      .select('*')
-      .eq('id', bookId)
-      .eq('is_published', true)
+      .update(updates)
+      .eq('id', params.id)
+      .select()
       .single();
 
-    if (bookError || !book) {
-      return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
-    }
-
-    // Ensure profile exists
-    const user = await currentUser();
-    const email = user?.emailAddresses[0]?.emailAddress || '';
-    const fullName = user?.fullName || null;
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .upsert(
-        { clerk_user_id: userId, email, full_name: fullName },
-        { onConflict: 'clerk_user_id' }
-      )
-      .select('id')
-      .single();
-
-    if (!profile) {
-      return NextResponse.json({ error: 'Profil introuvable' }, { status: 500 });
-    }
-
-    // Check if already purchased
-    const { data: existing } = await supabase
-      .from('purchases')
-      .select('id')
-      .eq('user_id', profile.id)
-      .eq('book_id', bookId)
-      .eq('status', 'completed')
-      .single();
-
-    if (existing) {
-      return NextResponse.json({ error: 'DÃ©jÃ  achetÃ©', redirect: `/lecture/${bookId}` }, { status: 409 });
-    }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-
-    // Create Stripe checkout session
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      customer_email: email,
-      line_items: [
-        {
-          price_data: {
-            currency: 'eur',
-            product_data: {
-              name: book.title,
-              description: book.short_description,
-              images: book.cover_url ? [book.cover_url] : [],
-            },
-            unit_amount: book.price,
-          },
-          quantity: 1,
-        },
-      ],
-      metadata: {
-        bookId: book.id,
-        userId: profile.id,
-        clerkUserId: userId,
-      },
-      success_url: `${appUrl}/bibliotheque/succes?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl}/livre/${book.id}`,
-    });
-
-    // Create pending purchase record
-    await supabase.from('purchases').insert({
-      user_id: profile.id,
-      book_id: book.id,
-      stripe_session_id: session.id,
-      amount: book.price,
-      status: 'pending',
-    });
-
-    return NextResponse.json({ url: session.url });
+    if (error) throw new Error(error.message);
+    return NextResponse.json({ book: data });
   } catch (err: any) {
-    console.error('Checkout error:', err);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
 
+export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const { userId } = await auth();
+    if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+    await assertAdmin(userId);
+
+    const supabase = createServerClient();
+    const { error } = await supabase.from('books').delete().eq('id', params.id);
+    if (error) throw new Error(error.message);
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}

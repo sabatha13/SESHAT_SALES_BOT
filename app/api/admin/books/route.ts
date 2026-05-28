@@ -1,4 +1,5 @@
-﻿export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
@@ -34,7 +35,6 @@ export async function POST(req: NextRequest) {
 
     if (!pdfFile) return NextResponse.json({ error: 'PDF requis' }, { status: 400 });
 
-    // Upload PDF to private bucket
     const pdfName = `${Date.now()}-${pdfFile.name.replace(/\s+/g, '_')}`;
     const { error: pdfErr } = await supabase.storage
       .from('pdfs')
@@ -68,5 +68,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-
-
