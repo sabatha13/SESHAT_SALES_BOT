@@ -19,7 +19,6 @@ export async function POST(req: NextRequest) {
 
     const supabase = createServerClient();
 
-    // Get book
     const { data: book, error: bookError } = await supabase
       .from('books')
       .select('*')
@@ -31,7 +30,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
     }
 
-    // Ensure profile exists
     const user = await currentUser();
     const email = user?.emailAddresses[0]?.emailAddress || '';
     const fullName = user?.fullName || null;
@@ -49,7 +47,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Profil introuvable' }, { status: 500 });
     }
 
-    // Check if already purchased
     const { data: existing } = await supabase
       .from('purchases')
       .select('id')
@@ -64,7 +61,6 @@ export async function POST(req: NextRequest) {
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
-    // Create Stripe checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       mode: 'payment',
@@ -92,7 +88,6 @@ export async function POST(req: NextRequest) {
       cancel_url: `${appUrl}/livre/${book.id}`,
     });
 
-    // Create pending purchase record
     await supabase.from('purchases').insert({
       user_id: profile.id,
       book_id: book.id,

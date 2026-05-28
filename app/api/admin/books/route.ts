@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
 
     if (!pdfFile) return NextResponse.json({ error: 'PDF requis' }, { status: 400 });
 
-    // Upload PDF to private bucket
     const pdfName = `${Date.now()}-${pdfFile.name.replace(/\s+/g, '_')}`;
     const { error: pdfErr } = await supabase.storage
       .from('pdfs')
