@@ -119,7 +119,7 @@ export default async function LivrePage({ params }: Props) {
           <div>
             <h2 className="font-serif text-xl text-gold-300 mb-4">Description</h2>
             <div className="prose-dark text-silver-400 text-sm leading-relaxed space-y-3">
-              {book.description.split('\n').filter(Boolean).map((para, i) => (
+              {book.description.split('\n').filter(Boolean).map((para: string, i: number) => (
                 <p key={i}>{para}</p>
               ))}
             </div>
