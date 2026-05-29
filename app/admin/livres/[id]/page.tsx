@@ -10,7 +10,7 @@ interface Props {
 
 export default async function EditLivrePage({ params }: Props) {
   const supabase = createServerClient();
-  const { data: book } = await supabase.from('books').select('*').eq('id', params.id).single();
+  const { data: book } = await supabase.from('books').select('id,title,author,short_description,description,price,category,tags,page_count,language,is_featured,is_published,download_allowed,subscription_included,access_type,estimated_reading_minutes,pdf_path,cover_url').eq('id', params.id).single();
   if (!book) notFound();
 
   return (
