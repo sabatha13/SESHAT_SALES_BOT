@@ -6,7 +6,7 @@ import { createServerClient } from '@/lib/supabase/server';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { userId } = await auth();
-  if (!userId) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
+  if (!userId) return NextResponse.json({ error: 'Non authentifie' }, { status: 401 });
 
   const supabase = createServerClient();
 
@@ -20,23 +20,25 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const { data: book } = await supabase
     .from('books')
-    .select('id, pdf_path, download_allowed, title')
+    .select('id, pdf_path, download_allowed, title, access_type')
     .eq('id', params.id)
     .single();
 
   if (!book) return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
-  if (!book.download_allowed) return NextResponse.json({ error: 'Téléchargement non autorisé' }, { status: 403 });
+  if (!book.download_allowed) return NextResponse.json({ error: 'Telechargement non autorise' }, { status: 403 });
 
-  // Verify purchase
-  const { data: purchase } = await supabase
-    .from('purchases')
-    .select('id')
-    .eq('user_id', profile.id)
-    .eq('book_id', params.id)
-    .eq('status', 'completed')
-    .single();
+  // Free preview books: allow download without purchase
+  if (book.access_type !== 'free_preview') {
+    const { data: purchase } = await supabase
+      .from('purchases')
+      .select('id')
+      .eq('user_id', profile.id)
+      .eq('book_id', params.id)
+      .eq('status', 'completed')
+      .single();
 
-  if (!purchase) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
+    if (!purchase) return NextResponse.json({ error: 'Acces refuse' }, { status: 403 });
+  }
 
   // Rate-limit: max 5 downloads per day per user per book
   const oneDayAgo = new Date(Date.now() - 86400000).toISOString();
@@ -48,7 +50,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .gte('created_at', oneDayAgo);
 
   if ((count || 0) >= 5) {
-    return NextResponse.json({ error: 'Limite de téléchargements atteinte' }, { status: 429 });
+    return NextResponse.json({ error: 'Limite de telechargements atteinte' }, { status: 429 });
   }
 
   // Create expiring download token
@@ -58,7 +60,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .select('token')
     .single();
 
-  if (!tokenRow) return NextResponse.json({ error: 'Erreur création token' }, { status: 500 });
+  if (!tokenRow) return NextResponse.json({ error: 'Erreur creation token' }, { status: 500 });
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
   return NextResponse.json({ url: `${appUrl}/api/download?token=${tokenRow.token}` });
