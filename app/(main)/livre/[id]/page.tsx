@@ -133,7 +133,12 @@ export default async function LivrePage({ params }: Props) {
                 {accessInfo.label}
               </div>
 
-              {owned ? (
+              {book.access_type === 'free_preview' ? (
+                <Link href={`/lecture/${book.id}`} className="btn-gold w-full py-3 flex items-center justify-center gap-2 text-sm">
+                  <BookOpen className="w-4 h-4" />
+                  Lire gratuitement
+                </Link>
+              ) : owned ? (
                 <Link href={`/lecture/${book.id}`} className="btn-gold w-full py-3 flex items-center justify-center gap-2 text-sm">
                   <BookOpen className="w-4 h-4" />
                   Lire maintenant

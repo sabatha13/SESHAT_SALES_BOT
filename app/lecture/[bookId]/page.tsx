@@ -82,19 +82,34 @@ async function getInitialPage(profileId: string, bookId: string): Promise<number
 
 export default async function LecturePage({ params }: Props) {
   const { userId } = await auth();
-  if (!userId) redirect('/connexion');
 
-  const access = await verifyAccess(userId, params.bookId);
+  // Check if book is free_preview — allow without login
+  const supabaseCheck = createServerClient();
+  const { data: bookCheck } = await supabaseCheck.from('books').select('access_type').eq('id', params.bookId).single();
+  const isFreePreview = bookCheck?.access_type === 'free_preview';
+
+  if (!userId && !isFreePreview) redirect('/connexion');
+
+  const access = userId
+    ? await verifyAccess(userId, params.bookId)
+    : isFreePreview
+      ? await (async () => {
+          const supabase = createServerClient();
+          const { data: book } = await supabase.from('books').select('id, title, pdf_path, download_allowed, subscription_included, access_type, estimated_reading_minutes').eq('id', params.bookId).eq('is_published', true).single();
+          return book ? { book, canDownload: false, isSubscriptionAccess: false, profileId: null } : null;
+        })()
+      : null;
+
   if (!access) notFound();
 
   const { book, canDownload, isSubscriptionAccess, profileId } = access;
 
   const user = await currentUser();
-  const email = user?.emailAddresses[0]?.emailAddress || userId;
+  const email = user?.emailAddresses[0]?.emailAddress || userId || 'visiteur';
 
   const [pdfUrl, initialPage] = await Promise.all([
     getSignedPdfUrl(book.pdf_path),
-    getInitialPage(profileId, params.bookId),
+    profileId ? getInitialPage(profileId, params.bookId) : Promise.resolve(1),
   ]);
 
   if (!pdfUrl) notFound();
