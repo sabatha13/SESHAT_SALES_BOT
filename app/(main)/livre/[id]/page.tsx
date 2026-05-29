@@ -165,14 +165,18 @@ export default async function LivrePage({ params }: Props) {
 
               {owned && <p className="text-center text-emerald-400 text-xs">✓ Vous possédez ce livre</p>}
 
-              {/* Download label */}
-              <div className="flex items-center gap-2 justify-center text-xs pt-2 border-t border-ash/50">
-                {book.download_allowed ? (
-                  <><Download className="w-3 h-3 text-emerald-400" /><span className="text-emerald-400">Téléchargement autorisé</span></>
-                ) : (
-                  <><Lock className="w-3 h-3 text-silver-500" /><span className="text-silver-500">Lecture en ligne uniquement</span></>
-                )}
-              </div>
+              {/* Download button */}
+              {book.download_allowed && (owned || book.access_type === 'free_preview') ? (
+                <DownloadButton bookId={book.id} />
+              ) : (
+                <div className="flex items-center gap-2 justify-center text-xs pt-2 border-t border-ash/50">
+                  {book.download_allowed ? (
+                    <><Download className="w-3 h-3 text-emerald-400" /><span className="text-emerald-400">Téléchargement autorisé après achat</span></>
+                  ) : (
+                    <><Lock className="w-3 h-3 text-silver-500" /><span className="text-silver-500">Lecture en ligne uniquement</span></>
+                  )}
+                </div>
+              )}
 
               <div className="text-center text-silver-500 text-xs space-y-1">
                 <p>Accès immédiat · Lecture sécurisée</p>
