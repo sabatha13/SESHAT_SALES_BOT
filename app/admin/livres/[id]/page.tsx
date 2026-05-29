@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase/server';
 import BookForm from '@/components/admin/BookForm';
 
+export const dynamic = 'force-dynamic';
+
 interface Props {
   params: { id: string };
 }
