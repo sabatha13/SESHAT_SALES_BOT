@@ -40,7 +40,7 @@ export default async function AdminAbonnementsPage() {
         </div>
         <div className="card-dark rounded-2xl p-5">
           <p className="text-silver-500 text-xs uppercase tracking-widest">MRR estimé</p>
-          <p className="font-serif text-3xl gold-text mt-1">{(mrr / 100).toFixed(2)} €</p>
+          <p className="font-serif text-3xl gold-text mt-1">{(mrr / 100).toFixed(2)} $US</p>
         </div>
       </div>
 
@@ -61,7 +61,7 @@ export default async function AdminAbonnementsPage() {
                   <p className="text-silver-500 text-xs">{sub.profile?.email}</p>
                 </td>
                 <td className="px-4 py-3 text-silver-400">
-                  {sub.plan?.interval === 'month' ? 'Mensuel' : 'Annuel'} • {sub.plan ? `${(sub.plan.price_cents / 100).toFixed(2)} €` : '—'}
+                  {sub.plan?.interval === 'month' ? 'Mensuel' : 'Annuel'} • {sub.plan ? `${(sub.plan.price_cents / 100).toFixed(2)} $US` : '—'}
                 </td>
                 <td className="px-4 py-3">
                   <SubscriptionBadge status={sub.status} />

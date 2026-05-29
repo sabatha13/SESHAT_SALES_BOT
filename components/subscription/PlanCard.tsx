@@ -31,11 +31,11 @@ export default function PlanCard({ plan, featured = false, features }: PlanCardP
   };
 
   const priceLabel = plan.interval === 'month'
-    ? `${(plan.price_cents / 100).toFixed(2)} €/mois`
-    : `${(plan.price_cents / 100).toFixed(2)} €/an`;
+    ? `${(plan.price_cents / 100).toFixed(2)} $US/mois`
+    : `${(plan.price_cents / 100).toFixed(2)} $US/an`;
 
   const perMonth = plan.interval === 'year'
-    ? `soit ${((plan.price_cents / 100) / 12).toFixed(2)} €/mois`
+    ? `soit ${((plan.price_cents / 100) / 12).toFixed(2)} $US/mois`
     : null;
 
   return (

@@ -75,7 +75,7 @@ export default async function SubscriptionDashboardPage() {
             )}
             {plan && (
               <p className="text-gold-400 text-sm mt-1">
-                {(plan.price_cents / 100).toFixed(2)} €/{plan.interval === 'month' ? 'mois' : 'an'}
+                {(plan.price_cents / 100).toFixed(2)} $US/{plan.interval === 'month' ? 'mois' : 'an'}
               </p>
             )}
           </div>
