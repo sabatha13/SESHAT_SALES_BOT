@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Save, Upload, Loader2, CheckCircle } from "lucide-react";
-import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
+import { createBrowserClient } from "@supabase/ssr";
 
 export default function AdminAuteurPage() {
   const [bio, setBio] = useState("");
@@ -26,7 +26,7 @@ export default function AdminAuteurPage() {
   const handlePhotoUpload = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
     setUploading(true);
-    const supabase = createClientComponentClient();
+    const supabase = createBrowserClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!);
     const ext = file.name.split(".").pop();
     const path = `author/le-comte-de-sabatha.${ext}`;
     const { error } = await supabase.storage.from("covers").upload(path, file, { upsert: true });
