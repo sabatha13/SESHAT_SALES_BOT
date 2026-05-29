@@ -107,12 +107,8 @@ export default async function LecturePage({ params }: Props) {
   const user = await currentUser();
   const email = user?.emailAddresses[0]?.emailAddress || userId || 'visiteur';
 
-  const [pdfUrl, initialPage] = await Promise.all([
-    getSignedPdfUrl(book.pdf_path),
-    profileId ? getInitialPage(profileId, params.bookId) : Promise.resolve(1),
-  ]);
-
-  if (!pdfUrl) notFound();
+  const pdfUrl = `/api/pdf-proxy?bookId=${params.bookId}`;
+  const initialPage = profileId ? await getInitialPage(profileId, params.bookId) : 1;
 
   return (
     <div className="flex flex-col h-screen bg-void">
