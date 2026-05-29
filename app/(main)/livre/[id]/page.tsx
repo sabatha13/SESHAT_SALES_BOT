@@ -8,6 +8,7 @@ import WishlistButton from '@/components/books/WishlistButton';
 import StarRating from '@/components/ui/StarRating';
 import BookCard from '@/components/books/BookCard';
 import ReviewForm from './ReviewForm';
+import DownloadButton from './DownloadButton';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { BookOpen, Calendar, FileText, Globe, Tag, Clock, Download, Crown, Lock } from 'lucide-react';
 import { Book } from '@/lib/types';
