@@ -57,6 +57,9 @@ export default function Navbar() {
               </Link>
             </SignedIn>
             <Link href="/contact" className={cn('nav-link text-sm tracking-wide', pathname === '/contact' && 'text-gold-400')}>
+            <Link href="/auteur/le-comte-de-sabatha" className={cn('nav-link text-sm tracking-wide', pathname.startsWith('/auteur') && 'text-gold-400')}>
+              L'Auteur
+            </Link>
               Contact
             </Link>
           </div>
