@@ -40,6 +40,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       language: fd.get('language'),
       is_featured: fd.get('is_featured') === 'true',
       is_published: fd.get('is_published') === 'true',
+      download_allowed: fd.get('download_allowed') === 'true',
+      subscription_included: fd.get('subscription_included') === 'true',
+      access_type: (fd.get('access_type') as string) || 'purchase_only',
+      estimated_reading_minutes: fd.get('estimated_reading_minutes') ? parseInt(fd.get('estimated_reading_minutes') as string) : null,
     };
 
     const pdfFile = fd.get('pdf') as File | null;

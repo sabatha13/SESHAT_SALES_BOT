@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus } from 'lucide-react';
+import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus, Crown, Download, Tag, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const nav = [
@@ -11,6 +11,10 @@ const nav = [
   { href: '/admin/livres/nouveau', label: 'Ajouter un livre', icon: Plus },
   { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
   { href: '/admin/ventes', label: 'Ventes', icon: ShoppingBag },
+  { href: '/admin/abonnements', label: 'Abonnements', icon: Crown },
+  { href: '/admin/telechargements', label: 'Téléchargements', icon: Download },
+  { href: '/admin/coupons', label: 'Coupons', icon: Tag },
+  { href: '/admin/avis', label: 'Avis', icon: Star },
 ];
 
 export default function AdminSidebar() {

@@ -23,27 +23,93 @@ export async function POST(req: NextRequest) {
 
   const supabase = createServerClient();
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object as Stripe.Checkout.Session;
-
-    if (session.payment_status === 'paid') {
-      await supabase
-        .from('purchases')
-        .update({
-          status: 'completed',
-          stripe_payment_intent: session.payment_intent as string,
-        })
-        .eq('stripe_session_id', session.id);
+  switch (event.type) {
+    case 'checkout.session.completed': {
+      const session = event.data.object as Stripe.Checkout.Session;
+      if (session.mode === 'payment' && session.payment_status === 'paid') {
+        await supabase
+          .from('purchases')
+          .update({ status: 'completed', stripe_payment_intent: session.payment_intent as string })
+          .eq('stripe_session_id', session.id);
+      }
+      if (session.mode === 'subscription' && session.subscription) {
+        const { userId, planId } = session.metadata || {};
+        if (userId && planId) {
+          const stripeSub = await stripe.subscriptions.retrieve(session.subscription as string);
+          await supabase.from('subscriptions').upsert(
+            {
+              user_id: userId,
+              plan_id: planId,
+              stripe_subscription_id: stripeSub.id,
+              stripe_customer_id: stripeSub.customer as string,
+              status: stripeSub.status === 'active' ? 'active' : stripeSub.status,
+              current_period_start: new Date((stripeSub as any).current_period_start * 1000).toISOString(),
+              current_period_end: new Date((stripeSub as any).current_period_end * 1000).toISOString(),
+              cancel_at_period_end: stripeSub.cancel_at_period_end,
+            },
+            { onConflict: 'stripe_subscription_id' }
+          );
+        }
+      }
+      break;
     }
-  }
 
-  if (event.type === 'charge.refunded') {
-    const charge = event.data.object as Stripe.Charge;
-    if (charge.payment_intent) {
+    case 'charge.refunded': {
+      const charge = event.data.object as Stripe.Charge;
+      if (charge.payment_intent) {
+        await supabase
+          .from('purchases')
+          .update({ status: 'refunded' })
+          .eq('stripe_payment_intent', charge.payment_intent as string);
+      }
+      break;
+    }
+
+    case 'invoice.payment_succeeded': {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subId = (invoice as any).subscription as string;
+      if (subId) {
+        await supabase
+          .from('subscriptions')
+          .update({ status: 'active' })
+          .eq('stripe_subscription_id', subId);
+      }
+      break;
+    }
+
+    case 'invoice.payment_failed': {
+      const invoice = event.data.object as Stripe.Invoice;
+      const subId = (invoice as any).subscription as string;
+      if (subId) {
+        await supabase
+          .from('subscriptions')
+          .update({ status: 'past_due' })
+          .eq('stripe_subscription_id', subId);
+      }
+      break;
+    }
+
+    case 'customer.subscription.updated': {
+      const sub = event.data.object as Stripe.Subscription;
       await supabase
-        .from('purchases')
-        .update({ status: 'refunded' })
-        .eq('stripe_payment_intent', charge.payment_intent as string);
+        .from('subscriptions')
+        .update({
+          status: sub.status === 'active' ? 'active' : sub.status === 'past_due' ? 'past_due' : sub.status,
+          current_period_start: new Date((sub as any).current_period_start * 1000).toISOString(),
+          current_period_end: new Date((sub as any).current_period_end * 1000).toISOString(),
+          cancel_at_period_end: sub.cancel_at_period_end,
+        })
+        .eq('stripe_subscription_id', sub.id);
+      break;
+    }
+
+    case 'customer.subscription.deleted': {
+      const sub = event.data.object as Stripe.Subscription;
+      await supabase
+        .from('subscriptions')
+        .update({ status: 'canceled' })
+        .eq('stripe_subscription_id', sub.id);
+      break;
     }
   }
 

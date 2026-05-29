@@ -31,9 +31,13 @@ export default function BookForm({ book }: BookFormProps) {
     language: book?.language || 'fr',
     is_featured: book?.is_featured ?? false,
     is_published: book?.is_published ?? true,
+    download_allowed: (book as any)?.download_allowed ?? false,
+    subscription_included: (book as any)?.subscription_included ?? false,
+    access_type: (book as any)?.access_type || 'purchase_only',
+    estimated_reading_minutes: (book as any)?.estimated_reading_minutes ?? null,
   });
 
-  const set = (k: string, v: string | boolean) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k: string, v: string | boolean | number | null) => setForm(f => ({ ...f, [k]: v }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -165,16 +169,46 @@ export default function BookForm({ book }: BookFormProps) {
         </div>
       </div>
 
+      {/* Access type */}
+      <div>
+        <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1.5">Type d'accès</label>
+        <select
+          value={form.access_type || 'purchase_only'}
+          onChange={e => set('access_type', e.target.value)}
+          className="w-full bg-charcoal border border-ash/50 rounded-xl px-3 py-2.5 text-sm text-silver-200 focus:outline-none focus:border-gold-600/50"
+        >
+          <option value="purchase_only">Achat uniquement</option>
+          <option value="subscription_only">Abonnement uniquement</option>
+          <option value="purchase_and_subscription">Achat ou Abonnement</option>
+          <option value="free_preview">Aperçu gratuit</option>
+        </select>
+      </div>
+
+      {/* Estimated reading time */}
+      <div>
+        <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1.5">Temps de lecture estimé (minutes)</label>
+        <input
+          type="number"
+          value={form.estimated_reading_minutes || ''}
+          onChange={e => set('estimated_reading_minutes', e.target.value ? parseInt(e.target.value) : null)}
+          placeholder="60"
+          min="1"
+          className="w-full bg-charcoal border border-ash/50 rounded-xl px-3 py-2.5 text-sm text-silver-200 focus:outline-none focus:border-gold-600/50"
+        />
+      </div>
+
       {/* Toggles */}
-      <div className="flex gap-6">
+      <div className="flex flex-wrap gap-6">
         {[
           { key: 'is_published', label: 'Publié' },
           { key: 'is_featured', label: 'Coup de cœur' },
+          { key: 'download_allowed', label: 'Téléchargement autorisé' },
+          { key: 'subscription_included', label: 'Inclus dans l\'abonnement' },
         ].map(toggle => (
           <label key={toggle.key} className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
-              checked={form[toggle.key as keyof typeof form] as boolean}
+              checked={!!form[toggle.key as keyof typeof form]}
               onChange={e => set(toggle.key, e.target.checked)}
               className="w-4 h-4 rounded accent-gold-500"
             />
