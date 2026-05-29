@@ -63,8 +63,8 @@ export default function PDFReader({
         setLoading(true);
         setError(null);
         const pdfjsLib = await import('pdfjs-dist');
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-        const doc = await pdfjsLib.getDocument({ url: pdfUrl, withCredentials: false }).promise;
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+        const doc = await pdfjsLib.getDocument({ url: pdfUrl, withCredentials: true }).promise;
         setPdfDoc(doc);
         setTotalPages(doc.numPages);
         setLoading(false);
