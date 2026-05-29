@@ -45,26 +45,20 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            {navLinks.map(link => (
-              <SignedIn key={link.href}>
-                <Link
-                  href={link.href}
-                  className={cn(
-                    'nav-link text-sm tracking-wide',
-                    pathname === link.href && 'text-gold-400'
-                  )}
-                >
-                  {link.label}
-                </Link>
-              </SignedIn>
-            ))}
-            {/* Show non-auth links always */}
             <Link
               href="/boutique"
               className={cn('nav-link text-sm tracking-wide', pathname === '/boutique' && 'text-gold-400')}
             >
               Boutique
             </Link>
+            <SignedIn>
+              <Link
+                href="/bibliotheque"
+                className={cn('nav-link text-sm tracking-wide', pathname === '/bibliotheque' && 'text-gold-400')}
+              >
+                Ma Bibliothèque
+              </Link>
+            </SignedIn>
           </div>
 
           {/* Auth buttons */}
