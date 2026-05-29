@@ -5,7 +5,7 @@ export default function Footer() {
   return (
     <footer className="border-t border-ash/40 bg-obsidian mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -38,14 +38,33 @@ export default function Footer() {
             </ul>
           </div>
 
+          {/* Support */}
+          <div>
+            <h4 className="text-gold-600 uppercase text-xs tracking-widest font-medium mb-4">Support</h4>
+            <ul className="space-y-2">
+              {[
+                { href: '/contact', label: 'Contact & Support' },
+                { href: '/abonnement', label: 'Abonnements' },
+                { href: '/remboursement', label: 'Politique de remboursement' },
+                { href: '/dmca', label: 'DMCA & Droits d\'auteur' },
+              ].map(link => (
+                <li key={link.href}>
+                  <Link href={link.href} className="text-silver-500 hover:text-gold-400 transition-colors text-sm">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
           {/* Legal */}
           <div>
             <h4 className="text-gold-600 uppercase text-xs tracking-widest font-medium mb-4">Légal</h4>
             <ul className="space-y-2">
               {[
-                { href: '/cgv', label: 'Conditions de vente' },
+                { href: '/mentions-legales', label: 'Mentions légales' },
                 { href: '/confidentialite', label: 'Confidentialité' },
-                { href: '/mentions', label: 'Mentions légales' },
+                { href: '/remboursement', label: 'Remboursement' },
               ].map(link => (
                 <li key={link.href}>
                   <Link href={link.href} className="text-silver-500 hover:text-gold-400 transition-colors text-sm">

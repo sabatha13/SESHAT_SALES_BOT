@@ -1,4 +1,5 @@
-﻿export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
@@ -29,12 +30,15 @@ export async function POST(req: NextRequest) {
     const language = fd.get('language') as string;
     const is_featured = fd.get('is_featured') === 'true';
     const is_published = fd.get('is_published') === 'true';
+    const download_allowed = fd.get('download_allowed') === 'true';
+    const subscription_included = fd.get('subscription_included') === 'true';
+    const access_type = (fd.get('access_type') as string) || 'purchase_only';
+    const estimated_reading_minutes = fd.get('estimated_reading_minutes') ? parseInt(fd.get('estimated_reading_minutes') as string) : null;
     const pdfFile = fd.get('pdf') as File | null;
     const coverFile = fd.get('cover') as File | null;
 
     if (!pdfFile) return NextResponse.json({ error: 'PDF requis' }, { status: 400 });
 
-    // Upload PDF to private bucket
     const pdfName = `${Date.now()}-${pdfFile.name.replace(/\s+/g, '_')}`;
     const { error: pdfErr } = await supabase.storage
       .from('pdfs')
@@ -57,7 +61,8 @@ export async function POST(req: NextRequest) {
       .insert({
         title, author, description, short_description,
         price, category, tags, page_count, language,
-        is_featured, is_published, cover_url, pdf_path: pdfName,
+        is_featured, is_published, download_allowed, subscription_included,
+        access_type, estimated_reading_minutes, cover_url, pdf_path: pdfName,
       })
       .select()
       .single();
@@ -68,5 +73,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
-
-
