@@ -2,9 +2,12 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import { createServerClient } from "@/lib/supabase/server";
 import BookCard from "@/components/books/BookCard";
+import { Book } from "@/lib/types";
 import { Feather } from "lucide-react";
 
-export default async function AuteurPage({ params }) {
+interface Props { params: { slug: string } }
+
+export default async function AuteurPage({ params }: Props) {
   const supabase = createServerClient();
   const { data: author } = await supabase.from("author_profiles").select("*").eq("slug", params.slug).single();
   if (!author) notFound();
@@ -38,14 +41,14 @@ export default async function AuteurPage({ params }) {
       {author.bio && (
         <div className="mb-16">
           <h2 className="font-serif text-2xl text-gold-300 mb-6">Biographie</h2>
-          <div className="space-y-4">{author.bio.split("\n").filter(Boolean).map((para, i) => <p key={i} className="text-silver-400 leading-relaxed">{para}</p>)}</div>
+          <div className="space-y-4">{author.bio.split("\n").filter(Boolean).map((para: string, i: number) => <p key={i} className="text-silver-400 leading-relaxed">{para}</p>)}</div>
         </div>
       )}
       {books && books.length > 0 && (
         <div>
           <div className="divider-gold mb-8" />
           <h2 className="font-serif text-2xl text-silver-200 mb-6">Oeuvres de {author.name}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">{books.map(book => <BookCard key={book.id} book={book} />)}</div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">{(books as Book[]).map(book => <BookCard key={book.id} book={book} />)}</div>
         </div>
       )}
     </div>
