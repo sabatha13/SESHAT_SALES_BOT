@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus, Crown, Download, Tag, Star } from 'lucide-react';
+import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus, Crown, Download, Tag, Star, Feather } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const nav = [
   { href: '/admin', label: 'Tableau de bord', icon: LayoutDashboard, exact: true },
   { href: '/admin/livres', label: 'Livres', icon: BookMarked },
   { href: '/admin/livres/nouveau', label: 'Ajouter un livre', icon: Plus },
+  { href: '/admin/auteur', label: 'Profil Auteur', icon: Feather },
   { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users },
   { href: '/admin/ventes', label: 'Ventes', icon: ShoppingBag },
   { href: '/admin/abonnements', label: 'Abonnements', icon: Crown },
