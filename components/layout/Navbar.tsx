@@ -45,20 +45,20 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-8">
-            <Link
-              href="/boutique"
-              className={cn('nav-link text-sm tracking-wide', pathname === '/boutique' && 'text-gold-400')}
-            >
+            <Link href="/boutique" className={cn('nav-link text-sm tracking-wide', pathname === '/boutique' && 'text-gold-400')}>
               Boutique
             </Link>
+            <Link href="/abonnement" className={cn('nav-link text-sm tracking-wide', pathname === '/abonnement' && 'text-gold-400')}>
+              Abonnement
+            </Link>
             <SignedIn>
-              <Link
-                href="/bibliotheque"
-                className={cn('nav-link text-sm tracking-wide', pathname === '/bibliotheque' && 'text-gold-400')}
-              >
+              <Link href="/bibliotheque" className={cn('nav-link text-sm tracking-wide', pathname === '/bibliotheque' && 'text-gold-400')}>
                 Ma Bibliothèque
               </Link>
             </SignedIn>
+            <Link href="/contact" className={cn('nav-link text-sm tracking-wide', pathname === '/contact' && 'text-gold-400')}>
+              Contact
+            </Link>
           </div>
 
           {/* Auth buttons */}
@@ -105,11 +105,17 @@ export default function Navbar() {
             <Link href="/boutique" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Boutique
             </Link>
+            <Link href="/abonnement" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
+              Abonnement
+            </Link>
             <SignedIn>
               <Link href="/bibliotheque" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
                 Ma Bibliothèque
               </Link>
             </SignedIn>
+            <Link href="/contact" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
+              Contact
+            </Link>
             <div className="pt-3 border-t border-ash/50 flex flex-col gap-2">
               <SignedOut>
                 <Link href="/connexion" className="btn-ghost-gold px-4 py-2 rounded-lg text-sm text-center" onClick={() => setMobileOpen(false)}>
