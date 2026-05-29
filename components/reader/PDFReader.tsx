@@ -113,7 +113,10 @@ export default function PDFReader({
 
   const renderPage = useCallback(async (pageNum: number) => {
     if (!pdfDoc || !canvasRef.current) return;
-    if (renderTaskRef.current) await renderTaskRef.current.cancel().catch(() => {});
+    if (renderTaskRef.current) {
+      try { renderTaskRef.current.cancel(); } catch {}
+      renderTaskRef.current = null;
+    }
     try {
       const page = await pdfDoc.getPage(pageNum);
       const viewport = page.getViewport({ scale });
@@ -386,3 +389,4 @@ export default function PDFReader({
     </div>
   );
 }
+
