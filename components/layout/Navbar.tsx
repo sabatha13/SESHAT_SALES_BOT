@@ -82,7 +82,7 @@ export default function Navbar() {
                     avatarBox: 'w-8 h-8 ring-1 ring-gold-500/40 ring-offset-2 ring-offset-void',
                   },
                 }}
-                afterSignOutUrl="/"
+                afterSignOutUrl="/" userProfileMode="navigation" userProfileUrl="/profil"
               />
             </SignedIn>
           </div>
