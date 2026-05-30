@@ -3,6 +3,9 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   const { email, subject, message } = await req.json();
@@ -27,5 +30,13 @@ export async function POST(req: NextRequest) {
   });
 
   if (error) return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+
+  await resend.emails.send({
+    from: 'CDS Librairie <onboarding@resend.dev>',
+    to: 'gpsabatha@gmail.com',
+    subject: `[Contact] ${subject}`,
+    html: `<p><strong>De:</strong> ${email}</p><p><strong>Sujet:</strong> ${subject}</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br/>')}</p>`,
+  });
+
   return NextResponse.json({ ok: true });
 }
