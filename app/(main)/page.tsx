@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import BookGrid from '@/components/books/BookGrid';
 import { Book } from '@/lib/types';
@@ -103,6 +103,39 @@ export default async function HomePage() {
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 animate-float">
           <div className="w-px h-12 bg-gradient-to-b from-transparent to-gold-600/40" />
           <div className="w-1.5 h-1.5 rounded-full bg-gold-600/60" />
+        </div>
+      </section>
+
+      {/* Book Showcase */}
+      <section className="py-20 px-4 bg-void">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-gold-600 uppercase tracking-[0.3em] text-xs mb-3">✨ L'Oeuvre de Le Comte de Sabatha ✨</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-silver-200 font-light mb-4">Les Livres Initiatiques</h2>
+            <div className="divider-gold mt-4" />
+          </div>
+          <div className="flex gap-6 overflow-x-auto pb-4 justify-center flex-wrap">
+            {latest.map((book: any) => (
+              <Link key={book.id} href={/livre/} className="group flex-shrink-0 w-48">
+                <div className="relative overflow-hidden rounded-xl border border-gold-600/20 group-hover:border-gold-500/60 transition-all duration-500 shadow-lg group-hover:shadow-gold-md">
+                  {book.cover_url ? (
+                    <img src={book.cover_url} alt={book.title} className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-72 bg-charcoal flex items-center justify-center text-silver-600 text-xs text-center p-4">{book.title}</div>
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-void/90 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
+                    <p className="text-gold-300 text-xs font-serif leading-tight">{book.title}</p>
+                  </div>
+                </div>
+                <p className="text-silver-400 text-xs text-center mt-2 group-hover:text-gold-400 transition-colors truncate">{book.title}</p>
+              </Link>
+            ))}
+          </div>
+          <div className="text-center mt-10">
+            <Link href="/boutique" className="btn-gold px-8 py-3 rounded-xl text-sm inline-flex items-center gap-2">
+              Voir tous les livres <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </div>
       </section>
 
