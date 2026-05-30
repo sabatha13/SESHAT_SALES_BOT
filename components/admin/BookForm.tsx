@@ -9,7 +9,7 @@ interface BookFormProps {
   book?: Book;
 }
 
-const categories = ['Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme', 'Vodou', 'Eso-psychologie', 'Autre'];
+const categories = ['Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme', 'Vodou', 'Eso-psychologie', 'Rituels', 'Gnose', 'Tantra / Magie Sexuelle', 'Franc-Maçonnerie', 'Rosicrucianisme', 'Autre'];
 
 export default function BookForm({ book }: BookFormProps) {
   const router = useRouter();

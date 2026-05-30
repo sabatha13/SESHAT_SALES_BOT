@@ -7,7 +7,7 @@ const features = [
   { icon: Star, title: 'Sélection Premium', desc: 'Des œuvres soigneusement sélectionnées pour leur qualité et leur profondeur ésotérique.' },
 ];
 
-const categories = ['Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme', 'Vodou', 'Eso-psychologie'];
+const categories = ['Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme', 'Vodou', 'Eso-psychologie', 'Rituels', 'Gnose', 'Tantra / Magie Sexuelle', 'Franc-Maçonnerie', 'Rosicrucianisme'];
 
 export default function HomePage() {
   return (
