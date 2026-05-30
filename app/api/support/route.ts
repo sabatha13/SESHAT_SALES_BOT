@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   await resend.emails.send({
     from: 'CDS Librairie <onboarding@resend.dev>',
-    to: 'gpsabatha@gmail.com',
+    to: 'technoreport2015@gmail.com',
     subject: `[Contact] ${subject}`,
     html: `<p><strong>De:</strong> ${email}</p><p><strong>Sujet:</strong> ${subject}</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br/>')}</p>`,
   });
