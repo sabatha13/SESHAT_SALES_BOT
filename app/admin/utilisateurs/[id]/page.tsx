@@ -3,18 +3,14 @@ import { createServerClient } from '@/lib/supabase/server';
 import { formatDate, formatPrice } from '@/lib/utils';
 import Link from 'next/link';
 import { ArrowLeft, BookOpen, ShieldCheck } from 'lucide-react';
+import GrantActions from './GrantActions';
 
 export const dynamic = 'force-dynamic';
 
 export default async function UserDetailPage({ params }: { params: { id: string } }) {
   const supabase = createServerClient();
 
-  const { data: user } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', params.id)
-    .single();
-
+  const { data: user } = await supabase.from('profiles').select('*').eq('id', params.id).single();
   if (!user) notFound();
 
   const { data: purchases } = await supabase
@@ -23,6 +19,15 @@ export default async function UserDetailPage({ params }: { params: { id: string 
     .eq('user_id', params.id)
     .eq('status', 'completed')
     .order('created_at', { ascending: false });
+
+  const { data: allBooks } = await supabase
+    .from('books')
+    .select('id, title')
+    .eq('is_published', true)
+    .order('title');
+
+  const ownedBookIds = (purchases || []).map((p: any) => p.book?.id).filter(Boolean);
+  const availableBooks = (allBooks || []).filter((b: any) => !ownedBookIds.includes(b.id));
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -51,10 +56,12 @@ export default async function UserDetailPage({ params }: { params: { id: string 
           <p className="text-silver-500 text-xs mt-1">Total dépensé</p>
         </div>
         <div className="card-dark p-4 rounded-xl text-center">
-          <p className="text-2xl font-serif gold-text">{formatDate(user.created_at)}</p>
+          <p className="text-lg font-serif gold-text">{formatDate(user.created_at)}</p>
           <p className="text-silver-500 text-xs mt-1">Inscrit le</p>
         </div>
       </div>
+
+      <GrantActions userId={user.id} books={availableBooks} />
 
       <div>
         <h2 className="font-serif text-xl text-gold-300 mb-4">Livres possédés ({purchases?.length || 0})</h2>
