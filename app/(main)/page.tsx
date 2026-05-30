@@ -1,4 +1,4 @@
-import Link from 'next/link';
+﻿import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import BookGrid from '@/components/books/BookGrid';
 import { Book } from '@/lib/types';
@@ -86,7 +86,7 @@ export default async function HomePage() {
           </h1>
           <div className="divider-gold my-8" />
           <p className="text-silver-400 text-lg md:text-xl font-light leading-relaxed max-w-2xl mx-auto mb-10 animate-fade-in">
-            Derriu00e8re chaque symbole se cache un monde que peu osent explorer. Le Comte de Sabatha vous ouvre les portes des arts interdits u2014 kabbale, alchimie, hermu00e9tisme, magie u2014 une u0153uvre unique, une vision singuliu00e8re, un voyage sans retour.
+            Derrière chaque symbole se cache un monde que peu osent explorer. Le Comte de Sabatha vous ouvre les portes des arts interdits — kabbale, alchimie, hermétisme, magie — une œuvre unique, une vision singulière, un voyage sans retour.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up">
             <Link href="/boutique" className="btn-gold px-8 py-4 rounded-xl text-base font-medium flex items-center gap-2 group">
