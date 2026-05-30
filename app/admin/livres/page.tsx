@@ -51,7 +51,7 @@ export default async function AdminLivresPage() {
                     {book.category}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-silver-300 text-sm">{formatPrice(book.price)}</td>
+                <td className="px-4 py-3 text-silver-300 text-sm">{formatPrice(book.price_cents)}</td>
                 <td className="px-4 py-3">
                   <span className={`flex items-center gap-1 text-xs ${book.is_published ? 'text-emerald-400' : 'text-silver-500'}`}>
                     {book.is_published ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}

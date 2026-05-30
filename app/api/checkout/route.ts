@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
               description: book.short_description,
               images: book.cover_url ? [book.cover_url] : [],
             },
-            unit_amount: book.price,
+            unit_amount: book.price_cents,
           },
           quantity: 1,
         },
@@ -92,7 +92,7 @@ export async function POST(req: NextRequest) {
       user_id: profile.id,
       book_id: book.id,
       stripe_session_id: session.id,
-      amount: book.price,
+      amount: book.price_cents,
       status: 'pending',
     });
 
