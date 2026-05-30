@@ -91,6 +91,9 @@ export default function Navbar() {
                     card: 'bg-obsidian border border-ash/50 shadow-xl',
                     userPreviewMainIdentifier: 'text-gold-400 font-serif',
                     userPreviewSecondaryIdentifier: 'text-silver-500',
+                    menuItem: 'text-gold-400 hover:text-gold-300 hover:bg-gold-500/10',
+                    menuItemText: 'text-gold-400',
+                    menuItemIcon: 'text-gold-400',
                   },
                 }}
                 afterSignOutUrl="/" userProfileMode="navigation" userProfileUrl="/profil"
