@@ -7,7 +7,7 @@ interface Props {
   searchParams: { categorie?: string; q?: string };
 }
 
-const categories = ['Tous', 'Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme'];
+const categories = ['Tous', 'Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme', 'Vodou', 'Eso-psychologie'];
 
 async function getBooks(category?: string, query?: string): Promise<Book[]> {
   try {
