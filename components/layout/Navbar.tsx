@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
-import { BookOpen, Menu, X, ShoppingBag } from 'lucide-react';
+import { Menu, X, ShoppingBag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -31,13 +31,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 rounded-lg bg-gold-gradient flex items-center justify-center shadow-gold-sm group-hover:shadow-gold-md transition-shadow duration-300">
-              <BookOpen className="w-4 h-4 text-void" />
-            </div>
-            <div className="hidden sm:block">
-              <span className="font-serif text-lg gold-text font-medium tracking-wider">CDS</span>
-              <span className="text-silver-400 text-xs block leading-none tracking-widest uppercase">Librairie Ésotérique</span>
-            </div>
+            <img
+              src="https://i.postimg.cc/vTGZT1x1/7f7e3ad5-8dad-4ac2-ab34-eecce7c816a9.png"
+              alt="CDS Librairie Ésotérique"
+              className="h-12 md:h-14 w-auto object-contain"
+            />
           </Link>
 
           {/* Desktop Nav */}
