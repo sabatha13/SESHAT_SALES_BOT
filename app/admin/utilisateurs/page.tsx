@@ -1,8 +1,7 @@
-'use client';
-
 import { createServerClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import { ShieldCheck } from 'lucide-react';
+import Link from 'next/link';
 
 async function getUsers() {
   const supabase = createServerClient();
