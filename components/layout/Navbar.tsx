@@ -30,12 +30,16 @@ export default function Navbar() {
       <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-2 group">
             <img
               src="https://i.postimg.cc/vTGZT1x1/7f7e3ad5-8dad-4ac2-ab34-eecce7c816a9.png"
               alt="CDS Librairie Ésotérique"
-              className="h-12 md:h-14 w-auto object-contain"
+              className="h-10 md:h-12 w-auto object-contain"
             />
+            <div className="hidden sm:block">
+              <span className="font-serif text-lg gold-text font-medium tracking-wider">CDS</span>
+              <span className="text-silver-400 text-xs block leading-none tracking-widest uppercase">Librairie Ésotérique</span>
+            </div>
           </Link>
 
           {/* Desktop Nav */}
