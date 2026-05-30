@@ -1,4 +1,4 @@
-import { createServerClient } from '@/lib/supabase/server';
+﻿import { createServerClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import { ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
@@ -26,16 +26,18 @@ export default async function UtilisateursPage() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-ash/50">
-              {['Utilisateur', 'Email', 'Achats', 'Rôle', 'Inscrit le'].map(h => (
+              {['Utilisateur', 'Email', 'Achats', 'Role', 'Inscrit le'].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-silver-500 text-xs uppercase tracking-wide font-medium">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {users.map((u: any) => (
-              <tr key={u.id} className="border-b border-ash/20 hover:bg-charcoal/30 transition-colors cursor-pointer" onClick={() => window.location.href=/admin/utilisateurs/}>
+              <tr key={u.id} className="border-b border-ash/20 hover:bg-charcoal/30 transition-colors">
                 <td className="px-4 py-3">
-                  <p className="text-silver-300 text-sm">{u.full_name || '—'}</p>
+                  <Link href={`/admin/utilisateurs/${u.id}`} className="text-silver-300 text-sm hover:text-gold-400 transition-colors">
+                    {u.full_name || 'Sans nom'}
+                  </Link>
                 </td>
                 <td className="px-4 py-3 text-silver-500 text-sm">{u.email}</td>
                 <td className="px-4 py-3 text-silver-300 text-sm">{u.purchases?.length || 0}</td>
