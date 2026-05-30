@@ -207,6 +207,7 @@ CREATE TABLE IF NOT EXISTS coupons (
   max_uses INTEGER,
   uses_count INTEGER DEFAULT 0,
   expires_at TIMESTAMPTZ,
+  book_ids UUID[] DEFAULT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

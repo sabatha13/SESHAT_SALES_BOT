@@ -26,12 +26,12 @@ export async function POST(req: NextRequest) {
   if (!(await assertAdmin(supabase, userId))) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
 
   const body = await req.json();
-  const { code, discount_percent, discount_cents, max_uses, expires_at } = body;
+  const { code, discount_percent, discount_cents, max_uses, expires_at, book_ids } = body;
   if (!code) return NextResponse.json({ error: 'Code requis' }, { status: 400 });
 
   const { data, error } = await supabase
     .from('coupons')
-    .insert({ code: code.toUpperCase(), discount_percent, discount_cents, max_uses, expires_at })
+    .insert({ code: code.toUpperCase(), discount_percent, discount_cents, max_uses, expires_at, book_ids: book_ids?.length ? book_ids : null })
     .select()
     .single();
 
