@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,7 +21,12 @@ interface Props {
 
 async function getBook(id: string) {
   const supabase = createServerClient();
-  const { data } = await supabase.from('books').select('*').eq('id', id).eq('is_published', true).single();
+  const { data } = await supabase
+    .from('books')
+    .select('id, title, description, cover_url, pdf_path, price_cents, category, tags, is_featured, is_published, created_at, access_type, download_allowed, subscription_included, estimated_reading_minutes, isbn, publication_year')
+    .eq('id', id)
+    .eq('is_published', true)
+    .single();
   return data;
 }
 
