@@ -23,7 +23,7 @@ async function getBook(id: string) {
   const supabase = createServerClient();
   const { data } = await supabase
     .from('books')
-    .select('id, title, description, short_description, cover_url, pdf_path, price_cents, category, tags, page_count, language, author, is_featured, is_published, created_at, access_type, download_allowed, subscription_included, estimated_reading_minutes, isbn, publication_year')
+    .select('*')
     .eq('id', id)
     .eq('is_published', true)
     .single();
@@ -129,7 +129,7 @@ export default async function LivrePage({ params }: Props) {
               <div className="text-center">
                 <p className="text-silver-500 text-xs uppercase tracking-widest mb-1">Prix</p>
                 {book.access_type !== 'subscription_only' ? (
-                  <p className="text-3xl font-serif gold-text">{formatPrice(book.price_cents)}</p>
+                  <p className="text-3xl font-serif gold-text">{formatPrice(book.price)}</p>
                 ) : (
                   <p className="text-lg font-serif text-purple-400">Abonnement requis</p>
                 )}
@@ -159,7 +159,7 @@ export default async function LivrePage({ params }: Props) {
               ) : (
                 <div className="space-y-2">
                   {book.access_type !== 'subscription_only' && (
-                    <PurchaseButton bookId={book.id} price={book.price_cents} owned={false} />
+                    <PurchaseButton bookId={book.id} price={book.price} owned={false} />
                   )}
                   {(book.subscription_included || book.access_type === 'subscription_only' || book.access_type === 'purchase_and_subscription') && !owned && (
                     <Link href="/abonnement" className="btn-ghost-gold w-full py-2.5 flex items-center justify-center gap-2 text-sm">
