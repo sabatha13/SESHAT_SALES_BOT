@@ -51,6 +51,30 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="py-20 px-4 bg-void">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-gold-600 uppercase tracking-[0.3em] text-xs mb-3">L'Auteur</p>
+            <h2 className="font-serif text-4xl text-silver-200 font-light mb-4">Le Comte de Sabatha</h2>
+            <div className="divider-gold mt-4" />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div className="flex flex-col items-center gap-6">
+              <div className="w-48 h-48 rounded-full overflow-hidden border-2 border-gold-500/40 shadow-[0_0_30px_rgba(201,168,76,0.2)]">
+                <img src="https://i.postimg.cc/fbSpfnb0/3b0d1-my-pic-5-1-819x1024-1.webp" alt="Le Comte de Sabatha" className="w-full h-full object-cover" />
+              </div>
+              <div className="text-center">
+                <h3 className="font-serif text-xl text-gold-300 mb-2">Le Comte de Sabatha</h3>
+                <p className="text-silver-500 text-sm leading-relaxed max-w-xs">Auteur, chercheur et guide spirituel. Ses oeuvres initiatiques ouvrent les portes de la sagesse ancienne et des arts occultes.</p>
+              </div>
+            </div>
+            <div className="rounded-2xl overflow-hidden border border-gold-600/20 shadow-lg" style={{aspectRatio:'16/9'}}>
+              <iframe width="100%" height="100%" src="https://www.youtube.com/embed/jjqBP6pW11w" title="Le Comte de Sabatha" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 px-4 bg-obsidian">
         <div className="max-w-5xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
