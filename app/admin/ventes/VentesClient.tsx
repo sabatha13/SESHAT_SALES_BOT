@@ -51,7 +51,7 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
 
   function exportCSV() {
     const rows = [
-      ['Livre', 'Client', 'Email', 'Montant (€)', 'Statut', 'Date'],
+      ['Livre', 'Client', 'Email', 'Montant ($US)', 'Statut', 'Date'],
       ...sales.map(s => [
         s.books?.title || '',
         s.profiles?.full_name || '',
@@ -159,9 +159,9 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={revenueByMonth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <XAxis dataKey="month" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `${v}€`} />
+              <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
               <Tooltip
-                formatter={(v: number) => [`${v.toFixed(2)} €`, 'Revenus']}
+                formatter={(v: number) => [`$${v.toFixed(2)}`, 'Revenus']}
                 contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#e5e7eb' }}
               />
               <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
