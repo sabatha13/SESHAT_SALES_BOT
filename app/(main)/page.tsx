@@ -1,4 +1,4 @@
-﻿import Link from 'next/link';
+import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Star } from 'lucide-react';
 
 const features = [
