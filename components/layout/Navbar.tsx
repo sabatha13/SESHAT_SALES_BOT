@@ -78,8 +78,19 @@ export default function Navbar() {
               </Link>
               <UserButton
                 appearance={{
+                  variables: {
+                    colorPrimary: '#C9A84C',
+                    colorBackground: '#1a1a1a',
+                    colorText: '#e8e0d0',
+                    colorTextSecondary: '#9a9080',
+                    colorInputBackground: '#2a2a2a',
+                    colorInputText: '#e8e0d0',
+                  },
                   elements: {
                     avatarBox: 'w-8 h-8 ring-1 ring-gold-500/40 ring-offset-2 ring-offset-void',
+                    card: 'bg-obsidian border border-ash/50 shadow-xl',
+                    userPreviewMainIdentifier: 'text-gold-400 font-serif',
+                    userPreviewSecondaryIdentifier: 'text-silver-500',
                   },
                 }}
                 afterSignOutUrl="/" userProfileMode="navigation" userProfileUrl="/profil"
