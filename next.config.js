@@ -1,4 +1,4 @@
-/** @type {import('next').NextConfig} */
+﻿/** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
@@ -14,6 +14,9 @@ const nextConfig = {
         port: '',
         pathname: '/storage/v1/object/public/**',
       },
+      { protocol: 'https', hostname: 'i.postimg.cc' },
+      { protocol: 'https', hostname: 'i.ibb.co' },
+      { protocol: 'https', hostname: 'imgur.com' },
     ],
   },
   webpack: (config) => {
@@ -23,4 +26,3 @@ const nextConfig = {
 };
 
 module.exports = nextConfig;
-
