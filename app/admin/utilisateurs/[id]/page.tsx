@@ -2,7 +2,7 @@
 import { createServerClient } from '@/lib/supabase/server';
 import { formatDate, formatPrice } from '@/lib/utils';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, BookOpen, ShieldCheck, Ban } from 'lucide-react';
 import GrantActions from './GrantActions';
 
 export const dynamic = 'force-dynamic';
@@ -51,11 +51,18 @@ export default async function UserDetailPage({ params }: { params: { id: string 
           <h1 className="font-serif text-3xl text-silver-200">{user.full_name || 'Utilisateur'}</h1>
           <p className="text-silver-500 text-sm">{user.email}</p>
         </div>
-        {user.is_admin && (
-          <span className="flex items-center gap-1 text-gold-400 text-xs border border-gold-500/30 px-2 py-1 rounded-full ml-auto">
-            <ShieldCheck className="w-3 h-3" /> Admin
-          </span>
-        )}
+        <div className="flex items-center gap-2 ml-auto">
+          {user.is_banned && (
+            <span className="flex items-center gap-1 text-red-400 text-xs border border-red-500/30 px-2 py-1 rounded-full">
+              <Ban className="w-3 h-3" /> Suspendu
+            </span>
+          )}
+          {user.is_admin && (
+            <span className="flex items-center gap-1 text-gold-400 text-xs border border-gold-500/30 px-2 py-1 rounded-full">
+              <ShieldCheck className="w-3 h-3" /> Admin
+            </span>
+          )}
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-4">
@@ -82,7 +89,7 @@ export default async function UserDetailPage({ params }: { params: { id: string 
         </div>
       </div>
 
-      <GrantActions userId={user.id} books={availableBooks} ownedBooks={ownedBooks} hasSubscription={!!subscription} />
+      <GrantActions userId={user.id} books={availableBooks} ownedBooks={ownedBooks} hasSubscription={!!subscription} isBanned={!!user.is_banned} />
 
       <div>
         <h2 className="font-serif text-xl text-gold-300 mb-4">Livres possédés ({purchases?.length || 0})</h2>

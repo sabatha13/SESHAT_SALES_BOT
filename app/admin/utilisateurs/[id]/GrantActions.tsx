@@ -1,20 +1,23 @@
 ﻿'use client';
 import { useState } from 'react';
-import { BookOpen, Crown, Check, AlertCircle, Trash2 } from 'lucide-react';
+import { BookOpen, Crown, Check, AlertCircle, Trash2, Ban } from 'lucide-react';
 
 interface Book { id: string; title: string; }
 interface OwnedBook { purchaseId: string; bookId: string; title: string; cover_url?: string; category?: string; purchaseDate: string; price: number; }
 
-export default function GrantActions({ userId, books, ownedBooks, hasSubscription }: {
+export default function GrantActions({ userId, books, ownedBooks, hasSubscription, isBanned }: {
   userId: string;
   books: Book[];
   ownedBooks: OwnedBook[];
   hasSubscription: boolean;
+  isBanned: boolean;
 }) {
   const [selectedBook, setSelectedBook] = useState('');
   const [loadingBook, setLoadingBook] = useState(false);
   const [loadingSub, setLoadingSub] = useState('');
   const [loadingRevoke, setLoadingRevoke] = useState('');
+  const [loadingBan, setLoadingBan] = useState(false);
+  const [banned, setBanned] = useState(isBanned);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   async function grantBook() {
@@ -57,6 +60,23 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
     if (res.ok) setTimeout(() => window.location.reload(), 800);
   }
 
+  async function toggleBan() {
+    setLoadingBan(true); setMsg(null);
+    const res = await fetch('/api/admin/ban-user', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ user_id: userId, ban: !banned }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setBanned(!banned);
+      setMsg({ type: 'success', text: !banned ? 'Compte suspendu.' : 'Compte réactivé.' });
+    } else {
+      setMsg({ type: 'error', text: data.error });
+    }
+    setLoadingBan(false);
+  }
+
   async function revokeSubscription() {
     setLoadingSub('revoke'); setMsg(null);
     const res = await fetch('/api/admin/revoke-subscription', {
@@ -80,6 +100,26 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
           {msg.text}
         </div>
       )}
+
+      {/* Ban / Suspend */}
+      <div className={`card-dark p-5 rounded-xl space-y-3 ${banned ? 'border border-red-500/30' : ''}`}>
+        <div className="flex items-center gap-2 text-silver-300 text-sm font-medium">
+          <Ban className="w-4 h-4 text-red-400" />
+          Suspension du compte
+        </div>
+        {banned && (
+          <div className="flex items-center gap-2 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2 text-red-400 text-xs">
+            <Ban className="w-3 h-3" /> Ce compte est actuellement suspendu
+          </div>
+        )}
+        <button
+          onClick={toggleBan}
+          disabled={loadingBan}
+          className={`px-4 py-2 rounded-lg text-sm transition-all disabled:opacity-50 ${banned ? 'bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30' : 'bg-red-500/20 border border-red-500/40 text-red-400 hover:bg-red-500/30'}`}
+        >
+          {loadingBan ? '...' : banned ? 'Réactiver le compte' : 'Suspendre le compte'}
+        </button>
+      </div>
 
       {/* Grant book */}
       <div className="card-dark p-5 rounded-xl space-y-3">

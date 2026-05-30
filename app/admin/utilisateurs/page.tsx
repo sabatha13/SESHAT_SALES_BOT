@@ -1,6 +1,6 @@
 ﻿import { createServerClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Ban } from 'lucide-react';
 import Link from 'next/link';
 
 async function getUsers() {
@@ -42,7 +42,11 @@ export default async function UtilisateursPage() {
                 <td className="px-4 py-3 text-silver-500 text-sm">{u.email}</td>
                 <td className="px-4 py-3 text-silver-300 text-sm">{u.purchases?.length || 0}</td>
                 <td className="px-4 py-3">
-                  {u.is_admin ? (
+                  {u.is_banned ? (
+                    <span className="flex items-center gap-1 text-red-400 text-xs">
+                      <Ban className="w-3 h-3" /> Suspendu
+                    </span>
+                  ) : u.is_admin ? (
                     <span className="flex items-center gap-1 text-gold-400 text-xs">
                       <ShieldCheck className="w-3 h-3" /> Admin
                     </span>
