@@ -15,19 +15,31 @@ export default async function UserDetailPage({ params }: { params: { id: string 
 
   const { data: purchases } = await supabase
     .from('purchases')
-    .select('*, book:books(id, title, cover_url, price, category)')
+    .select('id, created_at, book:books(id, title, cover_url, price, category)')
     .eq('user_id', params.id)
     .eq('status', 'completed')
     .order('created_at', { ascending: false });
 
-  const { data: allBooks } = await supabase
-    .from('books')
-    .select('id, title')
-    .eq('is_published', true)
-    .order('title');
+  const { data: subscription } = await supabase
+    .from('subscriptions')
+    .select('id, status, current_period_end')
+    .eq('user_id', params.id)
+    .eq('status', 'active')
+    .single();
+
+  const { data: allBooks } = await supabase.from('books').select('id, title').eq('is_published', true).order('title');
 
   const ownedBookIds = (purchases || []).map((p: any) => p.book?.id).filter(Boolean);
   const availableBooks = (allBooks || []).filter((b: any) => !ownedBookIds.includes(b.id));
+  const ownedBooks = (purchases || []).map((p: any) => ({
+    purchaseId: p.id,
+    bookId: p.book?.id,
+    title: p.book?.title,
+    cover_url: p.book?.cover_url,
+    category: p.book?.category,
+    purchaseDate: p.created_at,
+    price: p.book?.price || 0,
+  }));
 
   return (
     <div className="space-y-6 max-w-4xl">
@@ -56,12 +68,21 @@ export default async function UserDetailPage({ params }: { params: { id: string 
           <p className="text-silver-500 text-xs mt-1">Total dépensé</p>
         </div>
         <div className="card-dark p-4 rounded-xl text-center">
-          <p className="text-lg font-serif gold-text">{formatDate(user.created_at)}</p>
-          <p className="text-silver-500 text-xs mt-1">Inscrit le</p>
+          {subscription ? (
+            <>
+              <p className="text-sm font-serif text-purple-400">Abonné</p>
+              <p className="text-silver-500 text-xs mt-1">Jusqu&apos;au {formatDate(subscription.current_period_end)}</p>
+            </>
+          ) : (
+            <>
+              <p className="text-lg font-serif gold-text">{formatDate(user.created_at)}</p>
+              <p className="text-silver-500 text-xs mt-1">Inscrit le</p>
+            </>
+          )}
         </div>
       </div>
 
-      <GrantActions userId={user.id} books={availableBooks} />
+      <GrantActions userId={user.id} books={availableBooks} ownedBooks={ownedBooks} hasSubscription={!!subscription} />
 
       <div>
         <h2 className="font-serif text-xl text-gold-300 mb-4">Livres possédés ({purchases?.length || 0})</h2>
