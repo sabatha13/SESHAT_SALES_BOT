@@ -38,5 +38,12 @@ export async function POST(req: NextRequest) {
     html: `<p><strong>De:</strong> ${email}</p><p><strong>Sujet:</strong> ${subject}</p><p><strong>Message:</strong></p><p>${message.replace(/\n/g, '<br/>')}</p>`,
   });
 
+  await resend.emails.send({
+    from: 'CDS Librairie <onboarding@resend.dev>',
+    to: email,
+    subject: 'Nous avons bien reçu votre message',
+    html: '<p>ALUTRELI,</p><p>Nous avons bien reçu votre message concernant : <strong>' + subject + '</strong>.</p><p>Notre équipe vous répond sous 24-48h.</p><p>Merci de votre confiance.</p><p><em>CDS Librairie Ésotérique</em></p>',
+  });
+
   return NextResponse.json({ ok: true });
 }
