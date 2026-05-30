@@ -56,6 +56,7 @@ export default function Navbar() {
             <Link href="/contact" className={cn('nav-link text-sm tracking-wide', pathname === '/contact' && 'text-gold-400')}>
               Contact
             </Link>
+            <a href="https://chat.whatsapp.com/ClVIQUqtU4G4nwMdFqWPDB" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-600/20 border border-green-500/40 text-green-400 text-xs hover:bg-green-600/30 transition-all duration-300">Club WhatsApp</a>
           </div>
 
           {/* Auth buttons */}
