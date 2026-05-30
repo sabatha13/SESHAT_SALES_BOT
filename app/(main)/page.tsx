@@ -106,36 +106,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* Book Showcase */}
-      <section className="py-20 px-4 bg-void">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-gold-600 uppercase tracking-[0.3em] text-xs mb-3">✨ L&apos;Œuvre de Le Comte de Sabatha ✨</p>
-            <h2 className="font-serif text-4xl md:text-5xl text-silver-200 font-light mb-4">Les Livres Initiatiques</h2>
-            <div className="divider-gold mt-4" />
-          </div>
-          <div className="flex gap-6 pb-4 justify-center flex-wrap">
-            {latest.map((book: Book) => (
-              <Link key={book.id} href={`/livre/`} className="group flex-shrink-0 w-48">
-                <div className="relative overflow-hidden rounded-xl border border-gold-600/20 group-hover:border-gold-500/60 transition-all duration-500 shadow-lg">
-                  {book.cover_url ? (
-                    <img src={book.cover_url} alt={book.title} className="w-full h-72 object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="w-full h-72 bg-charcoal flex items-center justify-center text-silver-600 text-xs text-center p-4">{book.title}</div>
-                  )}
-                </div>
-                <p className="text-silver-400 text-xs text-center mt-2 group-hover:text-gold-400 transition-colors truncate">{book.title}</p>
-              </Link>
-            ))}
-          </div>
-          <div className="text-center mt-10">
-            <Link href="/boutique" className="btn-gold px-8 py-3 rounded-xl text-sm inline-flex items-center gap-2">
-              Voir tous les livres <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* Features */}
       <section className="py-20 px-4 bg-obsidian">
         <div className="max-w-5xl mx-auto">
