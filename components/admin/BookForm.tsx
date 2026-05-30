@@ -102,7 +102,7 @@ export default function BookForm({ book }: BookFormProps) {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div>
           <label className={labelClass}>Prix ($US) *</label>
-          <input required type="number" min="0.5" step="0.01" className={inputClass} value={form.price} onChange={e => set('price', e.target.value)} placeholder="9.99" />
+          <input required type="number" min="0" step="0.01" className={inputClass} value={form.price} onChange={e => set('price', e.target.value)} placeholder="9.99" />
         </div>
         <div>
           <label className={labelClass}>Catégorie</label>

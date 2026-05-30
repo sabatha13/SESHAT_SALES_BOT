@@ -79,7 +79,7 @@ export default function BookCard({ book, owned = false, className }: BookCardPro
           {!owned && (
             <div className="flex items-center justify-between pt-1">
               <span className="gold-text font-semibold text-base">
-                {formatPrice(book.price)}
+                {book.price === 0 ? 'Gratuit' : formatPrice(book.price)}
               </span>
               <span className="text-mist text-xs">{book.page_count}p</span>
             </div>
