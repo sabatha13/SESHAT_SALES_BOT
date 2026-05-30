@@ -129,7 +129,7 @@ export default async function LivrePage({ params }: Props) {
               <div className="text-center">
                 <p className="text-silver-500 text-xs uppercase tracking-widest mb-1">Prix</p>
                 {book.access_type !== 'subscription_only' ? (
-                  <p className="text-3xl font-serif gold-text">{formatPrice(book.price)}</p>
+                  <p className="text-3xl font-serif gold-text">{formatPrice(book.price_cents)}</p>
                 ) : (
                   <p className="text-lg font-serif text-purple-400">Abonnement requis</p>
                 )}
