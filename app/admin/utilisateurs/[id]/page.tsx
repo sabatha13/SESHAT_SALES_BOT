@@ -20,6 +20,13 @@ export default async function UserDetailPage({ params }: { params: { id: string 
     .eq('status', 'completed')
     .order('created_at', { ascending: false });
 
+  const { data: externalPayments } = await supabase
+    .from('purchases')
+    .select('id, created_at, amount, payment_method')
+    .eq('user_id', params.id)
+    .eq('status', 'external')
+    .order('created_at', { ascending: false });
+
   const { data: subscription } = await supabase
     .from('subscriptions')
     .select('id, status, current_period_end')
@@ -71,8 +78,11 @@ export default async function UserDetailPage({ params }: { params: { id: string 
           <p className="text-silver-500 text-xs mt-1">Livres achetés</p>
         </div>
         <div className="card-dark p-4 rounded-xl text-center">
-          <p className="text-2xl font-serif gold-text">{formatPrice((purchases || []).reduce((sum: number, p: any) => sum + (p.book?.price || 0), 0))}</p>
-          <p className="text-silver-500 text-xs mt-1">Total dépensé</p>
+          <p className="text-2xl font-serif gold-text">{formatPrice(
+            (purchases || []).reduce((sum: number, p: any) => sum + (p.book?.price || 0), 0) +
+            (externalPayments || []).reduce((sum: number, p: any) => sum + (p.amount || 0), 0)
+          )}</p>
+          <p className="text-silver-500 text-xs mt-1">Total reçu</p>
         </div>
         <div className={`card-dark p-4 rounded-xl text-center ${subscription && Math.ceil((new Date(subscription.current_period_end).getTime() - Date.now()) / 86400000) <= 7 ? 'border border-yellow-500/30' : ''}`}>
           {subscription ? (() => {
@@ -129,6 +139,23 @@ export default async function UserDetailPage({ params }: { params: { id: string 
           </div>
         )}
       </div>
+      {/* External payments */}
+      {(externalPayments || []).length > 0 && (
+        <div>
+          <h2 className="font-serif text-xl text-gold-300 mb-4">Paiements externes ({externalPayments!.length})</h2>
+          <div className="space-y-2">
+            {externalPayments!.map((p: any) => (
+              <div key={p.id} className="card-dark p-4 rounded-xl flex items-center justify-between">
+                <div>
+                  <p className="text-silver-300 text-sm font-medium">Abonnement</p>
+                  <p className="text-silver-500 text-xs mt-0.5">{p.payment_method} · {formatDate(p.created_at)}</p>
+                </div>
+                <p className="text-emerald-400 text-sm font-semibold">{formatPrice(p.amount)}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
