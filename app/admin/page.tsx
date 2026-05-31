@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { createServerClient } from '@/lib/supabase/server';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { BookMarked, Users, ShoppingBag, TrendingUp, BookOpen, UserPlus, Eye, Star } from 'lucide-react';
+import { BookMarked, Users, ShoppingBag, TrendingUp, BookOpen, UserPlus, Eye, Star, Crown } from 'lucide-react';
 
 async function getStats() {
   const supabase = createServerClient();
@@ -80,6 +80,58 @@ async function getTopBooks() {
   return Object.values(reads).sort((a, b) => b.reads - a.reads).slice(0, 5);
 }
 
+async function getRevenueLast30Days() {
+  const supabase = createServerClient();
+  const since = new Date();
+  since.setDate(since.getDate() - 29);
+  since.setHours(0, 0, 0, 0);
+
+  const { data } = await supabase
+    .from('purchases')
+    .select('amount, created_at')
+    .in('status', ['completed', 'external'])
+    .gte('created_at', since.toISOString())
+    .order('created_at', { ascending: true });
+
+  const days: Record<string, number> = {};
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().split('T')[0];
+    days[key] = 0;
+  }
+  (data || []).forEach(p => {
+    const key = new Date(p.created_at).toISOString().split('T')[0];
+    if (key in days) days[key] += p.amount;
+  });
+  return Object.entries(days).map(([date, amount]) => ({
+    date,
+    label: new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
+    amount,
+  }));
+}
+
+async function getSubscriptionStats() {
+  const supabase = createServerClient();
+  const [activeSubs, plans] = await Promise.all([
+    supabase.from('subscriptions').select('id, plan_id, subscription_plans(price_cents, interval)').eq('status', 'active'),
+    supabase.from('subscriptions').select('id').eq('status', 'active').is('plan_id', null),
+  ]);
+
+  const subs = activeSubs.data || [];
+  const manualCount = plans.data?.length || 0;
+  const stripeCount = subs.filter(s => s.plan_id).length;
+
+  let mrr = 0;
+  subs.forEach((s: any) => {
+    const plan = s.subscription_plans;
+    if (!plan) return;
+    mrr += plan.interval === 'month' ? plan.price_cents : Math.round(plan.price_cents / 12);
+  });
+
+  return { total: subs.length, stripeCount, manualCount, mrr };
+}
+
 async function getRecentUsers() {
   const supabase = createServerClient();
   const { data } = await supabase
@@ -91,8 +143,9 @@ async function getRecentUsers() {
 }
 
 export default async function AdminDashboard() {
-  const [stats, recentSales, newUsers, topBooks, recentUsers] = await Promise.all([
+  const [stats, recentSales, newUsers, topBooks, recentUsers, revenue30, subStats] = await Promise.all([
     getStats(), getRecentSales(), getNewUsersLast7Days(), getTopBooks(), getRecentUsers(),
+    getRevenueLast30Days(), getSubscriptionStats(),
   ]);
 
   const maxNewUsers = Math.max(...newUsers.map(d => d.count), 1);
@@ -123,6 +176,70 @@ export default async function AdminDashboard() {
             <p className="text-2xl font-semibold text-silver-200">{c.value}</p>
           </div>
         ))}
+      </div>
+
+      {/* Subscription stats + Revenue chart */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        {/* Subscription stats */}
+        <div className="card-dark rounded-2xl p-6">
+          <div className="flex items-center gap-2 mb-5">
+            <Crown className="w-4 h-4 text-purple-400" />
+            <h2 className="font-serif text-lg text-gold-300">Abonnements actifs</h2>
+          </div>
+          <p className="text-4xl font-semibold text-silver-200 mb-1">{subStats.total}</p>
+          <p className="text-silver-500 text-sm mb-5">abonné{subStats.total !== 1 ? 's' : ''} actif{subStats.total !== 1 ? 's' : ''}</p>
+          <div className="space-y-2 border-t border-ash/30 pt-4">
+            <div className="flex justify-between text-sm">
+              <span className="text-silver-500">Via Stripe</span>
+              <span className="text-silver-300">{subStats.stripeCount}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-silver-500">Manuels</span>
+              <span className="text-silver-300">{subStats.manualCount}</span>
+            </div>
+            <div className="flex justify-between text-sm border-t border-ash/30 pt-2 mt-2">
+              <span className="text-silver-400 font-medium">MRR estimé</span>
+              <span className="text-gold-400 font-semibold">{formatPrice(subStats.mrr)}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Revenue last 30 days */}
+        <div className="card-dark rounded-2xl p-6 lg:col-span-2">
+          <div className="flex items-center justify-between mb-5">
+            <div className="flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-gold-400" />
+              <h2 className="font-serif text-lg text-gold-300">Revenus (30 jours)</h2>
+            </div>
+            <span className="text-gold-400 font-semibold text-sm">
+              {formatPrice(revenue30.reduce((s, d) => s + d.amount, 0))}
+            </span>
+          </div>
+          {(() => {
+            const max = Math.max(...revenue30.map(d => d.amount), 1);
+            const hasData = revenue30.some(d => d.amount > 0);
+            return hasData ? (
+              <div className="flex items-end gap-0.5 h-28">
+                {revenue30.map((d, i) => (
+                  <div key={d.date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
+                    <div
+                      className="w-full rounded-t-sm bg-gold-500/40 border-t-2 border-gold-400 transition-all group-hover:bg-gold-500/60"
+                      style={{ height: `${Math.max((d.amount / max) * 100, d.amount > 0 ? 8 : 2)}%` }}
+                    />
+                    {i % 5 === 0 && (
+                      <span className="text-silver-600 text-[9px] absolute -bottom-4">{d.label}</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="h-28 flex items-center justify-center text-silver-500 text-sm">
+                Aucun revenu sur les 30 derniers jours.
+              </div>
+            );
+          })()}
+        </div>
       </div>
 
       {/* Charts row */}
