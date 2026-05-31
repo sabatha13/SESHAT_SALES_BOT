@@ -9,9 +9,11 @@ export default function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-8 h-8 rounded-lg bg-gold-gradient flex items-center justify-center">
-                <BookOpen className="w-4 h-4 text-void" />
-              </div>
+              <img
+                src="https://oriiunftyumqcrniepux.supabase.co/storage/v1/object/public/IMAGE/7f7e3ad5-8dad-4ac2-ab34-eecce7c816a9.png"
+                alt="CDS Librairie Ésotérique"
+                className="h-10 w-auto object-contain"
+              />
               <span className="font-serif text-lg gold-text font-medium">CDS Librairie Ésotérique</span>
             </div>
             <p className="text-silver-500 text-sm leading-relaxed">
