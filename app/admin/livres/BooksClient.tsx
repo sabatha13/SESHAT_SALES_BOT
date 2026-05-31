@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { Plus, Edit, Eye, EyeOff, BookOpen, Check, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Eye, EyeOff, BookOpen, Check, AlertCircle, Mail } from 'lucide-react';
 
 interface Book {
   id: string;
@@ -52,6 +52,23 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
     } else {
       setMsg({ type: 'error', text: 'Erreur lors de la mise à jour.' });
     }
+    setLoading('');
+  }
+
+  async function sendNewsletter(bookId: string, bookTitle: string) {
+    if (!confirm(`Envoyer une newsletter à tous les utilisateurs pour "${bookTitle}" ?`)) return;
+    setLoading(`newsletter-${bookId}`);
+    setMsg(null);
+    const res = await fetch('/api/admin/send-book-newsletter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ book_id: bookId }),
+    });
+    const data = await res.json();
+    setMsg(res.ok
+      ? { type: 'success', text: `Newsletter envoyée à ${data.sent} utilisateur${data.sent > 1 ? 's' : ''} !` }
+      : { type: 'error', text: data.error || 'Erreur envoi newsletter.' }
+    );
     setLoading('');
   }
 
@@ -148,10 +165,23 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
                 </td>
                 <td className="px-4 py-3 text-silver-500 text-xs">{formatDate(book.created_at)}</td>
                 <td className="px-4 py-3">
-                  <Link href={`/admin/livres/${book.id}`} className="flex items-center gap-1 text-gold-500 hover:text-gold-300 text-xs transition-colors">
-                    <Edit className="w-3 h-3" />
-                    Modifier
-                  </Link>
+                  <div className="flex items-center gap-3">
+                    <Link href={`/admin/livres/${book.id}`} className="flex items-center gap-1 text-gold-500 hover:text-gold-300 text-xs transition-colors">
+                      <Edit className="w-3 h-3" />
+                      Modifier
+                    </Link>
+                    {book.is_published && (
+                      <button
+                        onClick={() => sendNewsletter(book.id, book.title)}
+                        disabled={loading === `newsletter-${book.id}`}
+                        title="Envoyer newsletter"
+                        className="flex items-center gap-1 text-purple-400 hover:text-purple-300 text-xs transition-colors disabled:opacity-50"
+                      >
+                        <Mail className="w-3 h-3" />
+                        {loading === `newsletter-${book.id}` ? '...' : 'Newsletter'}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
