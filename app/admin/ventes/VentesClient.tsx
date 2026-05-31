@@ -8,6 +8,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   completed: { label: 'Complété', color: 'text-emerald-400 bg-emerald-900/20 border-emerald-700/30' },
   pending:   { label: 'En attente', color: 'text-yellow-400 bg-yellow-900/20 border-yellow-700/30' },
   refunded:  { label: 'Remboursé', color: 'text-red-400 bg-red-900/20 border-red-700/30' },
+  external:  { label: 'Paiement externe', color: 'text-blue-400 bg-blue-900/20 border-blue-700/30' },
 };
 
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -17,7 +18,7 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
   const [loading, setLoading] = useState('');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const completed = sales.filter(s => s.status === 'completed');
+  const completed = sales.filter(s => s.status === 'completed' || s.status === 'external');
   const totalRevenue = completed.reduce((sum, s) => sum + s.amount, 0);
   const pendingCount = sales.filter(s => s.status === 'pending').length;
 
@@ -215,7 +216,8 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
               return (
                 <tr key={sale.id} className="border-b border-ash/20 hover:bg-charcoal/30 transition-colors">
                   <td className="px-4 py-3 text-silver-300 text-sm max-w-[180px]">
-                    <p className="line-clamp-1">{sale.books?.title}</p>
+                    <p className="line-clamp-1">{sale.books?.title || (sale.status === 'external' ? 'Abonnement' : '—')}</p>
+                    {sale.payment_method && <p className="text-blue-400 text-xs mt-0.5">{sale.payment_method}</p>}
                   </td>
                   <td className="px-4 py-3">
                     <p className="text-silver-300 text-sm">{sale.profiles?.full_name || '—'}</p>
