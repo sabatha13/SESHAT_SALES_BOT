@@ -50,6 +50,9 @@ export default function Navbar() {
             <Link href="/abonnement" className={cn('nav-link text-sm tracking-wide', pathname === '/abonnement' && 'text-gold-400')}>
               Abonnement
             </Link>
+            <Link href="/auteur" className={cn('nav-link text-sm tracking-wide', pathname === '/auteur' && 'text-gold-400')}>
+              L'Auteur
+            </Link>
             <SignedIn>
               <Link href="/bibliotheque" className={cn('nav-link text-sm tracking-wide', pathname === '/bibliotheque' && 'text-gold-400')}>
                 Ma Bibliothèque
@@ -129,6 +132,9 @@ export default function Navbar() {
                 Ma Bibliothèque
               </Link>
             </SignedIn>
+            <Link href="/auteur" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
+              L'Auteur
+            </Link>
             <Link href="/contact" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Contact
             </Link>
