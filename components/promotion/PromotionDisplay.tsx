@@ -29,14 +29,15 @@ export default function PromotionDisplay() {
       if (diff < 24 * 60 * 60 * 1000) return; // 24h cooldown
     }
 
-    fetch('/api/promotion')
+    fetch('/api/promotion', { cache: 'no-store' })
       .then(r => r.json())
       .then(data => {
         if (data?.book) {
           setPromo(data);
           setTimeout(() => setVisible(true), 2000);
         }
-      });
+      })
+      .catch(() => {});
   }, []);
 
   function dismiss() {
