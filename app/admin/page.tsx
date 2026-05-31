@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createServerClient } from '@/lib/supabase/server';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { BookMarked, Users, ShoppingBag, TrendingUp, BookOpen, UserPlus, Eye, Star } from 'lucide-react';

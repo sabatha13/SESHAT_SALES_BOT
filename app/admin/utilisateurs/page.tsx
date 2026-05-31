@@ -1,4 +1,6 @@
-﻿import { createServerClient } from '@/lib/supabase/server';
+﻿export const dynamic = 'force-dynamic';
+
+import { createServerClient } from '@/lib/supabase/server';
 import { formatDate } from '@/lib/utils';
 import { ShieldCheck, Ban } from 'lucide-react';
 import Link from 'next/link';
