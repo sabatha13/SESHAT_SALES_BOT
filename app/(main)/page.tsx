@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Star } from 'lucide-react';
+import PromotionDisplay from '@/components/promotion/PromotionDisplay';
 
 const features = [
   { icon: Shield, title: 'Lecture Sécurisée', desc: 'Vos livres sont protégés par un filigrane dynamique et accessibles uniquement via notre lecteur.' },
@@ -12,6 +13,7 @@ const categories = ['Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Num�
 export default function HomePage() {
   return (
     <>
+      <PromotionDisplay />
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-glow-gold pointer-events-none" />
         <div className="absolute inset-0 bg-dark-gradient pointer-events-none" />
