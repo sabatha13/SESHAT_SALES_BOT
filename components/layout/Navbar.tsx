@@ -32,7 +32,7 @@ export default function Navbar() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <img
-              src="https://i.postimg.cc/vTGZT1x1/7f7e3ad5-8dad-4ac2-ab34-eecce7c816a9.png"
+              src="https://oriiunftyumqcrniepux.supabase.co/storage/v1/object/public/IMAGE/7f7e3ad5-8dad-4ac2-ab34-eecce7c816a9.png"
               alt="CDS Librairie Ésotérique"
               className="h-10 md:h-12 w-auto object-contain"
             />
