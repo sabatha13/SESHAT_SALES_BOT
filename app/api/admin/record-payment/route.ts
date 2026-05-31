@@ -15,7 +15,6 @@ export async function POST(req: NextRequest) {
     amount,
     status: 'external',
     payment_method: payment_method || 'Autre',
-    stripe_payment_intent_id: 'external_' + Date.now(),
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
