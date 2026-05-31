@@ -4,8 +4,8 @@ import { createServerClient } from '@/lib/supabase/server';
 import SubscriptionBadge from '@/components/subscription/SubscriptionBadge';
 import SubscriptionDashboardClient from './SubscriptionDashboardClient';
 import BookCard from '@/components/books/BookCard';
-import { AlertTriangle, BookOpen, Clock } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { AlertTriangle, BookOpen, Clock, Receipt } from 'lucide-react';
+import { formatDate, formatPrice } from '@/lib/utils';
 
 export default async function SubscriptionDashboardPage() {
   const { userId } = await auth();
@@ -30,6 +30,13 @@ export default async function SubscriptionDashboardPage() {
     .single();
 
   if (!sub) redirect('/abonnement');
+
+  const { data: payments } = await supabase
+    .from('purchases')
+    .select('id, created_at, amount, payment_method, status, book:books(title)')
+    .eq('user_id', profile.id)
+    .in('status', ['completed', 'external'])
+    .order('created_at', { ascending: false });
 
   const { data: subBooks } = await supabase
     .from('books')
@@ -111,6 +118,32 @@ export default async function SubscriptionDashboardPage() {
           {!isManual && <SubscriptionDashboardClient />}
         </div>
       </div>
+
+      {/* Payment history */}
+      {payments && payments.length > 0 && (
+        <div className="card-dark rounded-2xl p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Receipt className="w-4 h-4 text-gold-400" />
+            <h2 className="font-serif text-lg text-silver-200">Historique des paiements</h2>
+          </div>
+          <div className="space-y-2">
+            {payments.map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between py-2 border-b border-ash/20 last:border-0">
+                <div>
+                  <p className="text-silver-300 text-sm">
+                    {p.status === 'external' ? 'Abonnement' : (p.book?.title || 'Achat')}
+                  </p>
+                  <p className="text-silver-500 text-xs mt-0.5">
+                    {formatDate(p.created_at)}
+                    {p.payment_method && ` · ${p.payment_method}`}
+                  </p>
+                </div>
+                <span className="text-gold-400 text-sm font-medium">{formatPrice(p.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Included books */}
       <div>
