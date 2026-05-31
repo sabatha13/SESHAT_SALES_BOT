@@ -50,7 +50,7 @@ export default function Navbar() {
             <Link href="/abonnement" className={cn('nav-link text-sm tracking-wide', pathname === '/abonnement' && 'text-gold-400')}>
               Abonnement
             </Link>
-            <Link href="/auteur" className={cn('nav-link text-sm tracking-wide', pathname === '/auteur' && 'text-gold-400')}>
+            <Link href="/auteur" className={cn('text-sm tracking-wide px-3 py-1.5 rounded-full bg-gold-500/15 border border-gold-500/40 text-gold-400 hover:bg-gold-500/25 transition-all', pathname === '/auteur' && 'bg-gold-500/30 border-gold-500/60')}>
               L'Auteur
             </Link>
             <SignedIn>
