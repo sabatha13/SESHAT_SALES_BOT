@@ -114,8 +114,10 @@ export default async function SubscriptionDashboardPage() {
             )}
           </div>
 
-          {/* Only show Stripe portal for Stripe subscriptions */}
-          {!isManual && <SubscriptionDashboardClient />}
+          <SubscriptionDashboardClient
+            isManual={isManual}
+            cancelAtPeriodEnd={!!sub.cancel_at_period_end}
+          />
         </div>
       </div>
 
