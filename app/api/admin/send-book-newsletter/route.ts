@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
   const { data: users } = await supabase.from('profiles').select('email, full_name');
   if (!users || users.length === 0) return NextResponse.json({ error: 'Aucun utilisateur' }, { status: 400 });
 
-  const bookUrl = `https://seshat-sales-bot.vercel.app/livre/${book.id}`;
+  const bookUrl = `https://cdslibrairie.com/livre/${book.id}`;
   const priceText = `${(book.price / 100).toFixed(2)} $US`;
 
   const html = `
@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
 
     <!-- Footer -->
     <div style="padding:24px 32px;border-top:1px solid #1a1a1a;text-align:center;">
-      <p style="color:#4a4a50;font-size:12px;margin:0;">CDS Librairie Ésotérique · <a href="https://seshat-sales-bot.vercel.app" style="color:#4a4a50;">seshat-sales-bot.vercel.app</a></p>
+      <p style="color:#4a4a50;font-size:12px;margin:0;">CDS Librairie Ésotérique · <a href="https://cdslibrairie.com" style="color:#4a4a50;">cdslibrairie.com</a></p>
     </div>
   </div>
 </body>
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     const batch = users.slice(i, i + BATCH);
     await Promise.all(batch.map(user =>
       resend.emails.send({
-        from: 'CDS Librairie <noreply@seshat-sales-bot.vercel.app>',
+        from: 'CDS Librairie <noreply@cdslibrairie.com>',
         to: user.email,
         subject: `📖 Nouveau livre : ${book.title}`,
         html: html.replace('Cher lecteur', `Bonjour ${user.full_name || 'cher lecteur'}`),
