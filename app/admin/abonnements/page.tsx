@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
-import { formatDate } from '@/lib/utils';
+import { formatDate, formatPrice } from '@/lib/utils';
 import SubscriptionBadge from '@/components/subscription/SubscriptionBadge';
 
 export default async function AdminAbonnementsPage() {
@@ -14,15 +14,29 @@ export default async function AdminAbonnementsPage() {
 
   const { data: subs } = await supabase
     .from('subscriptions')
-    .select('*, profile:profiles(email, full_name), plan:subscription_plans(name, interval, price_cents)')
+    .select('*, profile:profiles(id, email, full_name), plan:subscription_plans(name, interval, price_cents)')
     .order('created_at', { ascending: false });
 
   const totalActive = subs?.filter(s => s.status === 'active').length || 0;
-  const mrr = subs?.filter(s => s.status === 'active').reduce((sum, s) => {
+
+  // MRR from Stripe plans
+  const stripeMrr = subs?.filter(s => s.status === 'active').reduce((sum, s) => {
     const plan = s.plan as any;
     if (!plan) return sum;
     return sum + (plan.interval === 'month' ? plan.price_cents : plan.price_cents / 12);
   }, 0) || 0;
+
+  // Revenue from external payments this month
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
+  const { data: externalThisMonth } = await supabase
+    .from('purchases')
+    .select('amount')
+    .eq('status', 'external')
+    .gte('created_at', startOfMonth.toISOString());
+  const externalMrr = (externalThisMonth || []).reduce((sum, p) => sum + p.amount, 0);
+
+  const totalMrr = stripeMrr + externalMrr;
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -40,7 +54,8 @@ export default async function AdminAbonnementsPage() {
         </div>
         <div className="card-dark rounded-2xl p-5">
           <p className="text-silver-500 text-xs uppercase tracking-widest">MRR estimé</p>
-          <p className="font-serif text-3xl gold-text mt-1">{(mrr / 100).toFixed(2)} $US</p>
+          <p className="font-serif text-3xl gold-text mt-1">{formatPrice(totalMrr)}</p>
+          <p className="text-silver-600 text-xs mt-1">Stripe + paiements externes ce mois</p>
         </div>
       </div>
 
@@ -61,7 +76,9 @@ export default async function AdminAbonnementsPage() {
                   <p className="text-silver-500 text-xs">{sub.profile?.email}</p>
                 </td>
                 <td className="px-4 py-3 text-silver-400">
-                  {sub.plan?.interval === 'month' ? 'Mensuel' : 'Annuel'} • {sub.plan ? `${(sub.plan.price_cents / 100).toFixed(2)} $US` : '—'}
+                  {sub.plan
+                    ? `${sub.plan.interval === 'month' ? 'Mensuel' : 'Annuel'} • ${(sub.plan.price_cents / 100).toFixed(2)} $US`
+                    : <span className="text-blue-400 text-xs border border-blue-500/30 px-2 py-0.5 rounded-full">Manuel</span>}
                 </td>
                 <td className="px-4 py-3">
                   <SubscriptionBadge status={sub.status} />
