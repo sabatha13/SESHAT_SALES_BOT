@@ -172,93 +172,103 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
         </button>
       </div>
 
-      {/* Grant subscription */}
-      <div className="card-dark p-5 rounded-xl space-y-3">
-        <div className="flex items-center gap-2 text-silver-300 text-sm font-medium">
-          <Crown className="w-4 h-4 text-purple-400" />
-          Accorder un abonnement
-        </div>
-        {hasSubscription && (
-          <div className="flex items-center justify-between bg-purple-500/10 border border-purple-500/20 rounded-lg px-3 py-2">
-            <span className="text-purple-400 text-xs">Abonnement actif</span>
-            <button onClick={revokeSubscription} disabled={loadingSub === 'revoke'} className="text-red-400 text-xs hover:text-red-300 flex items-center gap-1">
-              <Trash2 className="w-3 h-3" /> {loadingSub === 'revoke' ? '...' : 'Annuler'}
+      {/* Grant subscription — only when no active subscription */}
+      {!hasSubscription && (
+        <div className="card-dark p-5 rounded-xl space-y-3">
+          <div className="flex items-center gap-2 text-silver-300 text-sm font-medium">
+            <Crown className="w-4 h-4 text-purple-400" />
+            Accorder un abonnement
+          </div>
+
+          <div className="flex gap-2">
+            <button type="button" onClick={() => setGrantType('paid_external')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${grantType === 'paid_external' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'border-ash/40 text-silver-500 hover:border-ash'}`}>
+              <DollarSign className="w-3.5 h-3.5" /> Payé hors-site
+            </button>
+            <button type="button" onClick={() => setGrantType('free_grant')}
+              className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${grantType === 'free_grant' ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'border-ash/40 text-silver-500 hover:border-ash'}`}>
+              <Gift className="w-3.5 h-3.5" /> Gratuit
             </button>
           </div>
-        )}
 
-        {/* Grant type toggle */}
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => setGrantType('paid_external')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${grantType === 'paid_external' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'border-ash/40 text-silver-500 hover:border-ash'}`}
-          >
-            <DollarSign className="w-3.5 h-3.5" /> Paiement reçu
-          </button>
-          <button
-            type="button"
-            onClick={() => setGrantType('free_grant')}
-            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${grantType === 'free_grant' ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'border-ash/40 text-silver-500 hover:border-ash'}`}
-          >
-            <Gift className="w-3.5 h-3.5" /> Gratuit
-          </button>
-        </div>
-
-        {/* Paid external fields */}
-        {grantType === 'paid_external' && (
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1">Montant ($US)</label>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={paidAmount}
-                onChange={e => setPaidAmount(e.target.value)}
-                placeholder="9.99"
-                className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50"
-              />
+          {grantType === 'paid_external' && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1">Montant ($US)</label>
+                <input type="number" min="0" step="0.01" value={paidAmount} onChange={e => setPaidAmount(e.target.value)} placeholder="9.99"
+                  className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50" />
+              </div>
+              <div>
+                <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1">Méthode</label>
+                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
+                  className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50">
+                  <option>Zelle</option>
+                  <option>Virement</option>
+                  <option>Cash</option>
+                  <option>PayPal</option>
+                  <option>CashApp</option>
+                  <option>Autre</option>
+                </select>
+              </div>
             </div>
-            <div>
-              <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1">Méthode</label>
-              <select
-                value={paymentMethod}
-                onChange={e => setPaymentMethod(e.target.value)}
-                className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50"
-              >
-                <option>Zelle</option>
-                <option>Virement</option>
-                <option>Cash</option>
-                <option>PayPal</option>
-                <option>CashApp</option>
-                <option>Autre</option>
-              </select>
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* If subscription already active + paid_external: show save payment button */}
-        {hasSubscription && grantType === 'paid_external' ? (
-          <button
-            onClick={recordPayment}
-            disabled={loadingPayment}
-            className="w-full px-3 py-2 rounded-lg text-sm bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-          >
-            <DollarSign className="w-3.5 h-3.5" />
-            {loadingPayment ? 'Enregistrement...' : 'Enregistrer le paiement'}
-          </button>
-        ) : (
           <div className="flex gap-2">
-            <button onClick={() => grantSub(1)} disabled={!!loadingSub || hasSubscription} className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
+            <button onClick={() => grantSub(1)} disabled={!!loadingSub}
+              className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
               {loadingSub === '1' ? '...' : 'Mensuel (1 mois)'}
             </button>
-            <button onClick={() => grantSub(12)} disabled={!!loadingSub || hasSubscription} className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
+            <button onClick={() => grantSub(12)} disabled={!!loadingSub}
+              className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
               {loadingSub === '12' ? '...' : 'Annuel (1 an)'}
             </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* Active subscription — cancel + record payment */}
+      {hasSubscription && (
+        <div className="card-dark p-5 rounded-xl space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-silver-300 text-sm font-medium">
+              <Crown className="w-4 h-4 text-purple-400" />
+              Abonnement actif
+            </div>
+            <button onClick={revokeSubscription} disabled={loadingSub === 'revoke'}
+              className="text-red-400 text-xs hover:text-red-300 flex items-center gap-1 border border-red-500/30 px-2 py-1 rounded-lg transition-all">
+              <Trash2 className="w-3 h-3" /> {loadingSub === 'revoke' ? '...' : 'Annuler l\'abonnement'}
+            </button>
+          </div>
+
+          <div className="border-t border-ash/30 pt-3">
+            <p className="text-silver-500 text-xs mb-2 uppercase tracking-wide">Enregistrer un paiement reçu</p>
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <label className="text-silver-500 text-xs block mb-1">Montant ($US)</label>
+                <input type="number" min="0" step="0.01" value={paidAmount} onChange={e => setPaidAmount(e.target.value)} placeholder="9.99"
+                  className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50" />
+              </div>
+              <div>
+                <label className="text-silver-500 text-xs block mb-1">Méthode</label>
+                <select value={paymentMethod} onChange={e => setPaymentMethod(e.target.value)}
+                  className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50">
+                  <option>Zelle</option>
+                  <option>Virement</option>
+                  <option>Cash</option>
+                  <option>PayPal</option>
+                  <option>CashApp</option>
+                  <option>Autre</option>
+                </select>
+              </div>
+            </div>
+            <button onClick={recordPayment} disabled={loadingPayment}
+              className="w-full px-3 py-2 rounded-lg text-sm bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2">
+              <DollarSign className="w-3.5 h-3.5" />
+              {loadingPayment ? 'Enregistrement...' : 'Enregistrer le paiement'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Revoke book access */}
       {ownedBooks.length > 0 && (
