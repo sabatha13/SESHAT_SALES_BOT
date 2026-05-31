@@ -60,7 +60,30 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
     if (res.ok) setTimeout(() => window.location.reload(), 800);
   }
 
-  async function revokeBook(purchaseId: string) {
+  const [loadingPayment, setLoadingPayment] = useState(false);
+
+  async function recordPayment() {
+    if (!paidAmount || parseFloat(paidAmount) <= 0) {
+      setMsg({ type: 'error', text: 'Veuillez entrer le montant reçu.' });
+      return;
+    }
+    setLoadingPayment(true); setMsg(null);
+    const res = await fetch('/api/admin/record-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        user_id: userId,
+        amount: Math.round(parseFloat(paidAmount) * 100),
+        payment_method: paymentMethod,
+      }),
+    });
+    const data = await res.json();
+    setMsg(res.ok ? { type: 'success', text: 'Paiement enregistré !' } : { type: 'error', text: data.error });
+    setLoadingPayment(false);
+    if (res.ok) setPaidAmount('');
+  }
+
+
     setLoadingRevoke(purchaseId); setMsg(null);
     const res = await fetch('/api/admin/revoke-book', {
       method: 'POST',
@@ -215,14 +238,26 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
           </div>
         )}
 
-        <div className="flex gap-2">
-          <button onClick={() => grantSub(1)} disabled={!!loadingSub || hasSubscription} className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
-            {loadingSub === '1' ? '...' : 'Mensuel (1 mois)'}
+        {/* If subscription already active + paid_external: show save payment button */}
+        {hasSubscription && grantType === 'paid_external' ? (
+          <button
+            onClick={recordPayment}
+            disabled={loadingPayment}
+            className="w-full px-3 py-2 rounded-lg text-sm bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+          >
+            <DollarSign className="w-3.5 h-3.5" />
+            {loadingPayment ? 'Enregistrement...' : 'Enregistrer le paiement'}
           </button>
-          <button onClick={() => grantSub(12)} disabled={!!loadingSub || hasSubscription} className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
-            {loadingSub === '12' ? '...' : 'Annuel (1 an)'}
-          </button>
-        </div>
+        ) : (
+          <div className="flex gap-2">
+            <button onClick={() => grantSub(1)} disabled={!!loadingSub || hasSubscription} className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
+              {loadingSub === '1' ? '...' : 'Mensuel (1 mois)'}
+            </button>
+            <button onClick={() => grantSub(12)} disabled={!!loadingSub || hasSubscription} className="flex-1 px-3 py-2 rounded-lg text-sm bg-purple-500/20 border border-purple-500/40 text-purple-400 hover:bg-purple-500/30 transition-all disabled:opacity-50">
+              {loadingSub === '12' ? '...' : 'Annuel (1 an)'}
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Revoke book access */}
