@@ -7,14 +7,14 @@ async function getStats() {
   const [books, users, purchases, sessions] = await Promise.all([
     supabase.from('books').select('id', { count: 'exact' }).eq('is_published', true),
     supabase.from('profiles').select('id', { count: 'exact' }),
-    supabase.from('purchases').select('amount').eq('status', 'completed'),
+    supabase.from('purchases').select('amount, status').in('status', ['completed', 'external']),
     supabase.from('reader_sessions').select('id', { count: 'exact' }),
   ]);
   const revenue = (purchases.data || []).reduce((sum, p) => sum + p.amount, 0);
   return {
     books: books.count || 0,
     users: users.count || 0,
-    sales: (purchases.data || []).length,
+    sales: (purchases.data || []).filter(p => p.status === 'completed').length,
     revenue,
     reads: sessions.count || 0,
   };
