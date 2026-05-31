@@ -74,13 +74,22 @@ export default async function UserDetailPage({ params }: { params: { id: string 
           <p className="text-2xl font-serif gold-text">{formatPrice((purchases || []).reduce((sum: number, p: any) => sum + (p.book?.price || 0), 0))}</p>
           <p className="text-silver-500 text-xs mt-1">Total dépensé</p>
         </div>
-        <div className="card-dark p-4 rounded-xl text-center">
-          {subscription ? (
-            <>
-              <p className="text-sm font-serif text-purple-400">Abonné</p>
-              <p className="text-silver-500 text-xs mt-1">Jusqu&apos;au {formatDate(subscription.current_period_end)}</p>
-            </>
-          ) : (
+        <div className={`card-dark p-4 rounded-xl text-center ${subscription && Math.ceil((new Date(subscription.current_period_end).getTime() - Date.now()) / 86400000) <= 7 ? 'border border-yellow-500/30' : ''}`}>
+          {subscription ? (() => {
+            const daysLeft = Math.ceil((new Date(subscription.current_period_end).getTime() - Date.now()) / 86400000);
+            return (
+              <>
+                <p className="text-sm font-serif text-purple-400">Abonné</p>
+                <p className="text-silver-500 text-xs mt-1">Jusqu&apos;au {formatDate(subscription.current_period_end)}</p>
+                {daysLeft <= 7 && daysLeft > 0 && (
+                  <p className="text-yellow-400 text-xs mt-1">⚠ {daysLeft}j restant{daysLeft > 1 ? 's' : ''}</p>
+                )}
+                {daysLeft <= 0 && (
+                  <p className="text-red-400 text-xs mt-1">Expiré</p>
+                )}
+              </>
+            );
+          })() : (
             <>
               <p className="text-lg font-serif gold-text">{formatDate(user.created_at)}</p>
               <p className="text-silver-500 text-xs mt-1">Inscrit le</p>
