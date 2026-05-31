@@ -22,6 +22,7 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
   const [grantType, setGrantType] = useState<'free_grant' | 'paid_external'>('paid_external');
   const [paymentMethod, setPaymentMethod] = useState('Zelle');
   const [paidAmount, setPaidAmount] = useState('');
+  const [loadingPayment, setLoadingPayment] = useState(false);
 
   async function grantBook() {
     if (!selectedBook) return;
@@ -60,8 +61,6 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
     if (res.ok) setTimeout(() => window.location.reload(), 800);
   }
 
-  const [loadingPayment, setLoadingPayment] = useState(false);
-
   async function recordPayment() {
     if (!paidAmount || parseFloat(paidAmount) <= 0) {
       setMsg({ type: 'error', text: 'Veuillez entrer le montant reçu.' });
@@ -84,6 +83,7 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
   }
 
 
+  async function revokeBook(purchaseId: string) {
     setLoadingRevoke(purchaseId); setMsg(null);
     const res = await fetch('/api/admin/revoke-book', {
       method: 'POST',
