@@ -289,7 +289,7 @@ export default async function LivrePage({ params }: Props) {
               <p className="text-silver-500 text-sm">Aucun avis pour l'instant.</p>
             )}
 
-            {userId && owned && (
+            {userId && (owned || canReadViaSubscription) && (
               <div className="mt-6">
                 <ReviewForm bookId={book.id} />
               </div>
