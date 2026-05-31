@@ -113,13 +113,18 @@ async function getRevenueLast30Days() {
 
 async function getSubscriptionStats() {
   const supabase = createServerClient();
-  const [activeSubs, plans] = await Promise.all([
+
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+
+  const [activeSubs, manualSubs, externalPayments] = await Promise.all([
     supabase.from('subscriptions').select('id, plan_id, subscription_plans(price_cents, interval)').eq('status', 'active'),
     supabase.from('subscriptions').select('id').eq('status', 'active').is('plan_id', null),
+    supabase.from('purchases').select('amount').eq('status', 'external').gte('created_at', startOfMonth),
   ]);
 
   const subs = activeSubs.data || [];
-  const manualCount = plans.data?.length || 0;
+  const manualCount = manualSubs.data?.length || 0;
   const stripeCount = subs.filter(s => s.plan_id).length;
 
   let mrr = 0;
@@ -128,6 +133,10 @@ async function getSubscriptionStats() {
     if (!plan) return;
     mrr += plan.interval === 'month' ? plan.price_cents : Math.round(plan.price_cents / 12);
   });
+
+  // Add external payments this month as MRR contribution
+  const externalMrr = (externalPayments.data || []).reduce((sum, p) => sum + p.amount, 0);
+  mrr += externalMrr;
 
   return { total: subs.length, stripeCount, manualCount, mrr };
 }
