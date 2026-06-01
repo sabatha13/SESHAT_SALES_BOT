@@ -72,6 +72,27 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
     setLoading('');
   }
 
+  async function sendBulkNewsletter() {
+    if (selected.size === 0) return;
+    const selectedBooks = books.filter(b => selected.has(b.id));
+    const titles = selectedBooks.map(b => `"${b.title}"`).join(', ');
+    if (!confirm(`Envoyer une newsletter avec ${selected.size} livre${selected.size > 1 ? 's' : ''} :\n${titles}\n\nÀ tous les utilisateurs ?`)) return;
+    setLoading('bulk-newsletter');
+    setMsg(null);
+    const res = await fetch('/api/admin/send-bulk-newsletter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ book_ids: [...selected] }),
+    });
+    const data = await res.json();
+    setMsg(res.ok
+      ? { type: 'success', text: `Newsletter envoyée à ${data.sent} utilisateur${data.sent > 1 ? 's' : ''} avec ${selected.size} livre${selected.size > 1 ? 's' : ''} !` }
+      : { type: 'error', text: data.error || 'Erreur envoi newsletter.' }
+    );
+    setSelected(new Set());
+    setLoading('');
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -83,6 +104,14 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
           {selected.size > 0 && (
             <>
               <span className="text-silver-500 text-sm">{selected.size} sélectionné{selected.size > 1 ? 's' : ''}</span>
+              <button
+                onClick={sendBulkNewsletter}
+                disabled={!!loading}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/40 text-purple-400 text-sm hover:bg-purple-500/30 transition-all disabled:opacity-50"
+              >
+                <Mail className="w-4 h-4" />
+                {loading === 'bulk-newsletter' ? 'Envoi...' : `Newsletter (${selected.size})`}
+              </button>
               <button
                 onClick={() => bulkPublish(true)}
                 disabled={!!loading}
