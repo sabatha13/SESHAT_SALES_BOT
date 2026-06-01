@@ -26,7 +26,7 @@ export default function PromotionDisplay() {
     const lastDismissed = localStorage.getItem('promo_dismissed');
     if (lastDismissed) {
       const diff = Date.now() - parseInt(lastDismissed);
-      if (diff < 24 * 60 * 60 * 1000) return; // 24h cooldown
+      if (diff < 60 * 60 * 1000) return; // 1h cooldown
     }
 
     fetch('/api/promotion', { cache: 'no-store' })
