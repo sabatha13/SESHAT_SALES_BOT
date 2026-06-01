@@ -209,7 +209,7 @@ export default async function AdminDashboard() {
               <span className="text-silver-300">{subStats.manualCount}</span>
             </div>
             <div className="flex justify-between text-sm border-t border-ash/30 pt-2 mt-2">
-              <span className="text-silver-400 font-medium">MRR estimé</span>
+              <span className="text-silver-400 font-medium">MRR estimé <span className="text-silver-600 text-xs font-normal">(mois en cours)</span></span>
               <span className="text-gold-400 font-semibold">{formatPrice(subStats.mrr)}</span>
             </div>
           </div>
