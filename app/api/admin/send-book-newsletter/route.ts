@@ -23,7 +23,11 @@ export async function POST(req: NextRequest) {
 
   if (!book) return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
 
-  const { data: users } = await supabase.from('profiles').select('email, full_name');
+  const { data: users } = await supabase
+    .from('profiles')
+    .select('email, full_name')
+    .not('email', 'is', null)
+    .neq('email', '');
   if (!users || users.length === 0) return NextResponse.json({ error: 'Aucun utilisateur' }, { status: 400 });
 
   const bookUrl = `https://cdslibrairie.com/livre/${book.id}`;
