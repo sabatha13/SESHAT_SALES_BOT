@@ -325,7 +325,9 @@ export default async function AdminDashboard() {
                     <p className="text-silver-300 text-sm">{sale.books?.title}</p>
                     <p className="text-silver-500 text-xs">{sale.profiles?.email}</p>
                   </div>
-                  <span className="text-gold-400 text-sm font-medium">{formatPrice(sale.amount)}</span>
+                  <span className={`text-sm font-medium ${sale.amount === 0 ? 'text-silver-500' : 'text-gold-400'}`}>
+                    {sale.amount === 0 ? 'Gratuit' : formatPrice(sale.amount)}
+                  </span>
                 </div>
               ))}
             </div>
