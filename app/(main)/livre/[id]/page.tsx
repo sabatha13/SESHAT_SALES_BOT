@@ -232,8 +232,8 @@ export default async function LivrePage({ params }: Props) {
           </div>
 
           {/* Short description */}
-          <div className="py-6 text-center">
-            <p className="text-gold-300 font-serif text-xl md:text-2xl italic leading-relaxed">
+          <div className="card-dark p-5 rounded-2xl border-l-2 border-gold-600/50 text-center">
+            <p className="text-silver-300 font-serif text-lg italic leading-relaxed">
               "{book.short_description}"
             </p>
           </div>
