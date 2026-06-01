@@ -42,10 +42,11 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
   const revenueByBook = useMemo(() => {
     const map: Record<string, { title: string; amount: number; count: number }> = {};
     completed.forEach(s => {
-      const id = s.books?.title || 'Inconnu';
-      if (!map[id]) map[id] = { title: id, amount: 0, count: 0 };
-      map[id].amount += s.amount;
-      map[id].count += 1;
+      const title = s.books?.title || (s.status === 'external' ? 'Abonnement (externe)' : null);
+      if (!title) return;
+      if (!map[title]) map[title] = { title, amount: 0, count: 0 };
+      map[title].amount += s.amount;
+      map[title].count += 1;
     });
     return Object.values(map).sort((a, b) => b.amount - a.amount);
   }, [sales]);
