@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { Trash2, AlertCircle, Check, Download, RotateCcw } from 'lucide-react';
+import { Trash2, AlertCircle, Check, Download, RotateCcw, Search } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -13,16 +13,43 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 
 const MONTHS_FR = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
+const FILTERS = [
+  { key: 'all', label: 'Tous' },
+  { key: 'paid', label: 'Payées' },
+  { key: 'completed', label: 'Complété' },
+  { key: 'external', label: 'Paiement externe' },
+  { key: 'free', label: 'Gratuit' },
+  { key: 'refunded', label: 'Remboursé' },
+  { key: 'pending', label: 'En attente' },
+];
+
 export default function VentesClient({ sales: initialSales }: { sales: any[] }) {
   const [sales, setSales] = useState(initialSales);
   const [loading, setLoading] = useState('');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [filter, setFilter] = useState('all');
+  const [search, setSearch] = useState('');
 
   const completed = sales.filter(s => s.status === 'completed' || s.status === 'external');
   const totalRevenue = completed.reduce((sum, s) => sum + s.amount, 0);
   const pendingCount = sales.filter(s => s.status === 'pending').length;
 
-  // Revenue by month (last 12 months)
+  const filteredSales = useMemo(() => {
+    let result = sales;
+    if (filter === 'paid') result = result.filter(s => (s.status === 'completed' || s.status === 'external') && s.amount > 0);
+    else if (filter === 'free') result = result.filter(s => s.amount === 0);
+    else if (filter !== 'all') result = result.filter(s => s.status === filter);
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(s =>
+        (s.books?.title || '').toLowerCase().includes(q) ||
+        (s.profiles?.full_name || '').toLowerCase().includes(q) ||
+        (s.profiles?.email || '').toLowerCase().includes(q)
+      );
+    }
+    return result;
+  }, [sales, filter, search]);
+
   const revenueByMonth = useMemo(() => {
     const map: Record<string, number> = {};
     completed.forEach(s => {
@@ -38,7 +65,6 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
     });
   }, [sales]);
 
-  // Revenue by book
   const revenueByBook = useMemo(() => {
     const map: Record<string, { title: string; amount: number; count: number }> = {};
     completed.forEach(s => {
@@ -124,12 +150,12 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-serif text-3xl text-silver-200 mb-1">Ventes & Revenus</h1>
           <p className="text-silver-500 text-sm">{sales.length} transaction{sales.length !== 1 ? 's' : ''}</p>
         </div>
-        <div className="flex items-start gap-3">
+        <div className="flex items-center gap-3 flex-wrap">
           <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-charcoal border border-ash/50 text-silver-300 text-sm hover:border-gold-500/50 hover:text-gold-400 transition-all">
             <Download className="w-4 h-4" /> Exporter CSV
           </button>
@@ -139,9 +165,10 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
               {loading === 'all' ? 'Suppression...' : `Supprimer les ${pendingCount} en attente`}
             </button>
           )}
-          <div className="card-dark px-5 py-3 rounded-xl text-right">
-            <p className="text-silver-500 text-xs uppercase tracking-wide mb-1">Revenus totaux</p>
-            <p className="text-2xl font-serif gold-text">{formatPrice(totalRevenue)}</p>
+          {/* Total revenue — bigger */}
+          <div className="card-dark px-6 py-3 rounded-xl text-right border border-gold-600/20">
+            <p className="text-silver-500 text-xs uppercase tracking-widest mb-1">Revenus totaux</p>
+            <p className="text-3xl font-serif gold-text">{formatPrice(totalRevenue)}</p>
           </div>
         </div>
       </div>
@@ -153,19 +180,15 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
         </div>
       )}
 
-      {/* Charts row */}
+      {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Revenue by month */}
         <div className="card-dark p-5 rounded-2xl">
           <h2 className="font-serif text-lg text-gold-300 mb-4">Revenus par mois (12 derniers mois)</h2>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={revenueByMonth} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
               <XAxis dataKey="month" tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fill: '#9ca3af', fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={v => `$${v}`} />
-              <Tooltip
-                formatter={(v: number) => [`$${v.toFixed(2)}`, 'Revenus']}
-                contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#e5e7eb' }}
-              />
+              <Tooltip formatter={(v: number) => [`$${v.toFixed(2)}`, 'Revenus']} contentStyle={{ backgroundColor: '#1a1a1a', border: '1px solid #333', borderRadius: '8px', color: '#e5e7eb' }} />
               <Bar dataKey="amount" radius={[4, 4, 0, 0]}>
                 {revenueByMonth.map((_, i) => (
                   <Cell key={i} fill={i === revenueByMonth.length - 1 ? '#d4a843' : '#4b3a1f'} />
@@ -175,7 +198,6 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
           </ResponsiveContainer>
         </div>
 
-        {/* Revenue by book */}
         <div className="card-dark p-5 rounded-2xl">
           <h2 className="font-serif text-lg text-gold-300 mb-4">Revenus par livre</h2>
           {revenueByBook.length === 0 ? (
@@ -188,7 +210,10 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
                   <div key={i}>
                     <div className="flex justify-between text-sm mb-1">
                       <span className="text-silver-300 truncate max-w-[200px]">{b.title}</span>
-                      <span className="text-gold-400 font-medium ml-2 shrink-0">{formatPrice(b.amount)} <span className="text-silver-500 font-normal text-xs">({b.count} vente{b.count > 1 ? 's' : ''})</span></span>
+                      <span className="text-gold-400 font-medium ml-2 shrink-0">
+                        {b.amount > 0 ? formatPrice(b.amount) : <span className="text-silver-500">Gratuit</span>}
+                        {' '}<span className="text-silver-500 font-normal text-xs">({b.count} vente{b.count > 1 ? 's' : ''})</span>
+                      </span>
                     </div>
                     <div className="h-1.5 bg-charcoal rounded-full overflow-hidden">
                       <div className="h-full bg-gold-500 rounded-full" style={{ width: `${pct}%` }} />
@@ -198,6 +223,31 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
               })}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Search + Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-500" />
+          <input
+            type="text"
+            placeholder="Rechercher par livre, client ou email..."
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            className="w-full bg-charcoal border border-ash/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-silver-200 placeholder-silver-600 focus:outline-none focus:border-gold-600/50"
+          />
+        </div>
+        <div className="flex gap-2 flex-wrap">
+          {FILTERS.map(f => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-3 py-2 rounded-lg text-xs font-medium transition-all ${filter === f.key ? 'bg-gold-500/20 border border-gold-500/50 text-gold-400' : 'bg-charcoal border border-ash/50 text-silver-400 hover:border-gold-500/30'}`}
+            >
+              {f.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -212,43 +262,40 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
             </tr>
           </thead>
           <tbody>
-            {sales.map((sale: any) => {
+            {filteredSales.map((sale: any) => {
               const s = statusLabels[sale.status] || statusLabels.pending;
+              const isFree = sale.amount === 0 && sale.status === 'completed';
+              const bookTitle = sale.books?.title || (sale.status === 'external' ? 'Abonnement Manuel' : '—');
               return (
                 <tr key={sale.id} className="border-b border-ash/20 hover:bg-charcoal/30 transition-colors">
                   <td className="px-4 py-3 text-silver-300 text-sm max-w-[180px]">
-                    <p className="line-clamp-1">{sale.books?.title || (sale.status === 'external' ? 'Abonnement' : '—')}</p>
-                    {sale.payment_method && <p className="text-blue-400 text-xs mt-0.5">{sale.payment_method}</p>}
+                    <p className="line-clamp-1">{bookTitle}</p>
+                    {sale.payment_method && (
+                      <span className="inline-block mt-0.5 text-xs px-2 py-0.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400">{sale.payment_method}</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <p className="text-silver-300 text-sm">{sale.profiles?.full_name || '—'}</p>
                     <p className="text-silver-500 text-xs">{sale.profiles?.email}</p>
                   </td>
-                  <td className="px-4 py-3 text-gold-400 text-sm font-medium">{formatPrice(sale.amount)}</td>
                   <td className="px-4 py-3">
-                    <span className={`inline-block border text-xs px-2.5 py-0.5 rounded-full ${s.color}`}>
-                      {s.label}
-                    </span>
+                    {isFree
+                      ? <span className="text-silver-500 text-sm">Gratuit</span>
+                      : <span className="text-gold-400 text-sm font-medium">{formatPrice(sale.amount)}</span>
+                    }
+                  </td>
+                  <td className="px-4 py-3">
+                    <span className={`inline-block border text-xs px-2.5 py-0.5 rounded-full ${s.color}`}>{s.label}</span>
                   </td>
                   <td className="px-4 py-3 text-silver-500 text-xs">{formatDate(sale.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
                       {sale.status === 'completed' && (
-                        <button
-                          onClick={() => refundSale(sale.id)}
-                          disabled={loading === `refund-${sale.id}`}
-                          title="Rembourser"
-                          className="text-yellow-400 hover:text-yellow-300 transition-colors disabled:opacity-50"
-                        >
+                        <button onClick={() => refundSale(sale.id)} disabled={loading === `refund-${sale.id}`} title="Rembourser" className="text-yellow-400 hover:text-yellow-300 transition-colors disabled:opacity-50">
                           <RotateCcw className="w-4 h-4" />
                         </button>
                       )}
-                      <button
-                        onClick={() => deleteSale(sale.id)}
-                        disabled={loading === sale.id}
-                        title="Supprimer"
-                        className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50"
-                      >
+                      <button onClick={() => deleteSale(sale.id)} disabled={loading === sale.id} title="Supprimer" className="text-red-400 hover:text-red-300 transition-colors disabled:opacity-50">
                         <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
@@ -256,15 +303,18 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
                 </tr>
               );
             })}
-            {sales.length === 0 && (
+            {filteredSales.length === 0 && (
               <tr>
                 <td colSpan={6} className="px-4 py-10 text-center text-silver-500 text-sm">
-                  Aucune vente pour le moment.
+                  Aucune transaction trouvée.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+        <div className="px-4 py-2 border-t border-ash/20 text-right">
+          <p className="text-silver-600 text-xs">{filteredSales.length} transaction{filteredSales.length !== 1 ? 's' : ''} affichée{filteredSales.length !== 1 ? 's' : ''}</p>
+        </div>
       </div>
     </div>
   );
