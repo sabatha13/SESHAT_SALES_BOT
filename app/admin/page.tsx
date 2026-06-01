@@ -63,7 +63,7 @@ async function getTopBooks() {
   const supabase = createServerClient();
   const [{ data: sessions }, { data: purchases }] = await Promise.all([
     supabase.from('reader_sessions').select('book_id, book:books(title)'),
-    supabase.from('purchases').select('book_id').eq('status', 'completed'),
+    supabase.from('purchases').select('book_id, book:books(title)').eq('status', 'completed'),
   ]);
 
   const reads: Record<string, { title: string; reads: number; sales: number }> = {};
@@ -74,7 +74,8 @@ async function getTopBooks() {
   });
   (purchases || []).forEach((p: any) => {
     if (!p.book_id) return;
-    if (!reads[p.book_id]) reads[p.book_id] = { title: 'Inconnu', reads: 0, sales: 0 };
+    if (!reads[p.book_id]) reads[p.book_id] = { title: p.book?.title || 'Inconnu', reads: 0, sales: 0 };
+    else if (reads[p.book_id].title === 'Inconnu' && p.book?.title) reads[p.book_id].title = p.book.title;
     reads[p.book_id].sales++;
   });
   return Object.values(reads).sort((a, b) => b.reads - a.reads).slice(0, 5);
