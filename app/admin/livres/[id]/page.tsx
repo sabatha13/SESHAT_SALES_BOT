@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import BookForm from '@/components/admin/BookForm';
 
 export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 interface Props {
   params: { id: string };

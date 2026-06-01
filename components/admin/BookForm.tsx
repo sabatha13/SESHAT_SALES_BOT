@@ -58,8 +58,22 @@ export default function BookForm({ book }: BookFormProps) {
 
       if (!res.ok) throw new Error(data.error || 'Erreur');
 
-      router.push('/admin/livres');
-      router.refresh();
+      if (isEdit) {
+        // Update local form state with saved values to reflect truth
+        const saved = data.book;
+        setForm(f => ({
+          ...f,
+          download_allowed: saved.download_allowed,
+          subscription_included: saved.subscription_included,
+          is_published: saved.is_published,
+          is_featured: saved.is_featured,
+          access_type: saved.access_type,
+        }));
+        router.refresh();
+      } else {
+        router.push('/admin/livres');
+        router.refresh();
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
