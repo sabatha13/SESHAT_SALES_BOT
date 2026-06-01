@@ -34,7 +34,7 @@ export default function AbonnementsClient({ subs: initialSubs }: { subs: any[] }
   const filtered = useMemo(() => {
     let result = subs;
     if (filter === 'active') result = result.filter(s => s.status === 'active');
-    else if (filter === 'cancelled') result = result.filter(s => s.status === 'cancelled');
+    else if (filter === 'cancelled') result = result.filter(s => s.status === 'cancelled' || s.status === 'canceled');
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(s =>
@@ -151,7 +151,7 @@ export default function AbonnementsClient({ subs: initialSubs }: { subs: any[] }
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                       Actif
                     </span>
-                  ) : sub.status === 'cancelled' ? (
+                  ) : (sub.status === 'cancelled' || sub.status === 'canceled') ? (
                     <span className="flex items-center gap-1.5 text-silver-500 text-xs">
                       <Ban className="w-3 h-3" /> Annulé
                     </span>
