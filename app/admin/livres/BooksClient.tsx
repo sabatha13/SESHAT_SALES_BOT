@@ -173,7 +173,7 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
                   />
                 </td>
                 <td className="px-4 py-3">
-                  <p className="text-silver-300 text-sm font-medium line-clamp-1 max-w-[200px]">{book.title}</p>
+                  <p className="text-silver-300 text-sm font-medium line-clamp-1 max-w-[200px]" title={book.title}>{book.title}</p>
                 </td>
                 <td className="px-4 py-3 text-silver-500 text-sm">{book.author}</td>
                 <td className="px-4 py-3">
