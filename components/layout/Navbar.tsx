@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
-import { Menu, X, ShoppingBag } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -75,10 +75,6 @@ export default function Navbar() {
               </Link>
             </SignedOut>
             <SignedIn>
-              <Link href="/bibliotheque" className="nav-link flex items-center gap-2 text-sm">
-                <ShoppingBag className="w-4 h-4" />
-                Ma bibliothèque
-              </Link>
               <UserButton
                 appearance={{
                   variables: {
