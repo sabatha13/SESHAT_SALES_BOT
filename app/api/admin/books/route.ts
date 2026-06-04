@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const author = fd.get('author') as string;
     const description = fd.get('description') as string;
     const short_description = fd.get('short_description') as string;
-    const price_cents = Math.round(parseFloat(fd.get('price') as string) * 100);
+    const price = Math.round(parseFloat(fd.get('price') as string) * 100);
     const category = fd.get('category') as string;
     const tags = (fd.get('tags') as string).split(',').map(t => t.trim()).filter(Boolean);
     const page_count = parseInt(fd.get('page_count') as string) || 0;
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
       .from('books')
       .insert({
         title, author, description, short_description,
-        price_cents, category, tags, page_count, language,
+        price, category, tags, page_count, language,
         is_featured, is_published, download_allowed, subscription_included,
         access_type, estimated_reading_minutes, cover_url, pdf_path: pdfName,
       })

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
     }
 
-    if (!book.price_cents || book.price_cents <= 0) {
+    if (!book.price || book.price <= 0) {
       return NextResponse.json({ error: 'Prix du livre non configuré. Contactez l\'administrateur.' }, { status: 400 });
     }
 
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
               name: book.title,
               ...(book.short_description ? { description: book.short_description.slice(0, 500) } : {}),
             },
-            unit_amount: book.price_cents,
+            unit_amount: book.price,
           },
           quantity: 1,
         },
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
       user_id: profile.id,
       book_id: book.id,
       stripe_session_id: session.id,
-      amount: book.price_cents,
+      amount: book.price,
       status: 'pending',
     });
 
