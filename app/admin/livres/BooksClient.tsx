@@ -1,8 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { Plus, Edit, Eye, EyeOff, BookOpen, Check, AlertCircle, Mail } from 'lucide-react';
+import { Plus, Edit, Eye, EyeOff, BookOpen, Check, AlertCircle, Mail, Search } from 'lucide-react';
 
 interface Book {
   id: string;
@@ -20,8 +20,19 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState('');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [search, setSearch] = useState('');
 
-  const allSelected = books.length > 0 && selected.size === books.length;
+  const filteredBooks = useMemo(() => {
+    if (!search.trim()) return books;
+    const q = search.toLowerCase();
+    return books.filter(b =>
+      b.title.toLowerCase().includes(q) ||
+      b.author.toLowerCase().includes(q) ||
+      b.category.toLowerCase().includes(q)
+    );
+  }, [books, search]);
+
+  const allSelected = filteredBooks.length > 0 && filteredBooks.every(b => selected.has(b.id));
 
   function toggleSelect(id: string) {
     setSelected(prev => {
@@ -32,7 +43,7 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
   }
 
   function toggleSelectAll() {
-    setSelected(allSelected ? new Set() : new Set(books.map(b => b.id)));
+    setSelected(allSelected ? new Set() : new Set(filteredBooks.map(b => b.id)));
   }
 
   async function bulkPublish(is_published: boolean) {
@@ -144,6 +155,18 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
         </div>
       )}
 
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-silver-500" />
+        <input
+          type="text"
+          placeholder="Rechercher par titre, auteur ou catégorie..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="w-full bg-charcoal border border-ash/50 rounded-xl pl-10 pr-4 py-2.5 text-sm text-silver-200 placeholder-silver-600 focus:outline-none focus:border-gold-600/50"
+        />
+      </div>
+
       <div className="card-dark rounded-2xl overflow-hidden">
         <table className="w-full">
           <thead>
@@ -162,7 +185,7 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
             </tr>
           </thead>
           <tbody>
-            {books.map(book => (
+            {filteredBooks.map(book => (
               <tr key={book.id} className={`border-b border-ash/20 hover:bg-charcoal/30 transition-colors ${selected.has(book.id) ? 'bg-gold-900/10' : ''}`}>
                 <td className="px-4 py-3">
                   <input
@@ -214,10 +237,10 @@ export default function BooksClient({ books: initialBooks }: { books: Book[] }) 
                 </td>
               </tr>
             ))}
-            {books.length === 0 && (
+            {filteredBooks.length === 0 && (
               <tr>
                 <td colSpan={9} className="px-4 py-10 text-center text-silver-500 text-sm">
-                  Aucun livre. <Link href="/admin/livres/nouveau" className="text-gold-400 hover:underline">Ajouter le premier</Link>
+                  {search ? 'Aucun livre ne correspond à la recherche.' : <><span>Aucun livre. </span><Link href="/admin/livres/nouveau" className="text-gold-400 hover:underline">Ajouter le premier</Link></>}
                 </td>
               </tr>
             )}

@@ -27,6 +27,7 @@ export default function PromotionClient({ books, promotion: initial }: { books: 
   const [expiresAt, setExpiresAt] = useState((initial as any)?.expires_at ? new Date((initial as any).expires_at).toISOString().slice(0, 16) : '');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
 
   const selectedBook = books.find(b => b.id === bookId);
 
@@ -69,7 +70,7 @@ export default function PromotionClient({ books, promotion: initial }: { books: 
             <p className="text-silver-500 text-xs mt-0.5">Afficher la promotion sur la page d'accueil</p>
           </div>
           <button
-            onClick={() => setIsActive(!isActive)}
+            onClick={() => isActive ? setShowDeactivateModal(true) : setIsActive(true)}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm transition-all ${isActive ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-ash/20 border-ash/40 text-silver-500'}`}
           >
             {isActive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
@@ -151,6 +152,32 @@ export default function PromotionClient({ books, promotion: initial }: { books: 
           Sauvegarder la promotion
         </button>
       </div>
+      {/* Deactivate confirmation modal */}
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-void/70 backdrop-blur-sm">
+          <div className="card-dark rounded-2xl p-6 max-w-sm w-full mx-4 space-y-5 border border-ash/50">
+            <div className="flex items-center gap-3">
+              <EyeOff className="w-5 h-5 text-silver-400 shrink-0" />
+              <h3 className="font-serif text-silver-200 text-lg">Masquer la promotion du site ?</h3>
+            </div>
+            <p className="text-silver-500 text-sm">La promotion ne sera plus visible sur la page d'accueil.</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeactivateModal(false)}
+                className="btn-ghost-gold px-4 py-2 rounded-lg text-sm"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={() => { setIsActive(false); setShowDeactivateModal(false); }}
+                className="px-4 py-2 rounded-lg bg-ash/30 border border-ash/50 text-silver-300 text-sm hover:bg-ash/50 transition-all"
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

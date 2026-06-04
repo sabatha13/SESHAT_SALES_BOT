@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, AlertCircle, Loader2, Plus, Trash2 } from 'lucide-react';
+import { Check, AlertCircle, Loader2, Plus, Trash2, Upload } from 'lucide-react';
 
 interface AuthorProfile {
   id: string;
@@ -20,6 +20,7 @@ export default function AuteurClient({ profile }: { profile: AuthorProfile }) {
   const [form, setForm] = useState(profile);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [photoUploading, setPhotoUploading] = useState(false);
 
   const set = (k: string, v: any) => setForm(f => ({ ...f, [k]: v }));
 
@@ -55,6 +56,23 @@ export default function AuteurClient({ profile }: { profile: AuthorProfile }) {
     setLoading(false);
   }
 
+  async function handlePhotoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    const fd = new FormData();
+    fd.append('file', file);
+    const res = await fetch('/api/admin/upload-photo', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (res.ok && data.url) {
+      set('photo_url', data.url);
+    } else {
+      setMsg({ type: 'error', text: data.error || 'Erreur lors du téléchargement.' });
+    }
+    setPhotoUploading(false);
+    e.target.value = '';
+  }
+
   const inputClass = 'w-full bg-charcoal border border-ash/50 rounded-xl px-3 py-2.5 text-sm text-silver-200 focus:outline-none focus:border-gold-600/50';
   const labelClass = 'block text-silver-400 text-xs uppercase tracking-wide mb-1.5';
 
@@ -81,9 +99,31 @@ export default function AuteurClient({ profile }: { profile: AuthorProfile }) {
           </div>
         </div>
         <div>
-          <label className={labelClass}>URL Photo</label>
-          <input className={inputClass} value={form.photo_url} onChange={e => set('photo_url', e.target.value)} />
-          {form.photo_url && <img src={form.photo_url} alt="Preview" className="w-20 h-20 rounded-full object-cover mt-2 border-2 border-gold-500/30" />}
+          <label className={labelClass}>Photo de profil</label>
+          <div className="flex items-center gap-4">
+            {form.photo_url && (
+              <img src={form.photo_url} alt="Preview" className="w-20 h-20 rounded-full object-cover border-2 border-gold-500/30 shrink-0" />
+            )}
+            <div className="flex-1 space-y-2">
+              <label className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-ash/50 bg-charcoal hover:border-gold-600/50 cursor-pointer transition-all text-sm text-silver-400 hover:text-gold-400 w-fit">
+                {photoUploading
+                  ? <Loader2 className="w-4 h-4 animate-spin" />
+                  : <Upload className="w-4 h-4" />
+                }
+                {photoUploading ? 'Téléchargement...' : 'Choisir une photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  disabled={photoUploading}
+                  className="hidden"
+                />
+              </label>
+              {form.photo_url && (
+                <p className="text-silver-600 text-xs truncate max-w-xs">{form.photo_url}</p>
+              )}
+            </div>
+          </div>
         </div>
         <div>
           <label className={labelClass}>Introduction (sous le nom)</label>
