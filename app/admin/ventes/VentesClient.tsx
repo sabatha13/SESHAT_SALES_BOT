@@ -29,6 +29,8 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const completed = sales.filter(s => s.status === 'completed' || s.status === 'external');
   const totalRevenue = completed.reduce((sum, s) => sum + s.amount, 0);

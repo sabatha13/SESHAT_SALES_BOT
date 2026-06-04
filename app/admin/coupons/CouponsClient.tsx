@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Loader2, Plus, ToggleLeft, ToggleRight, Mail, Check, AlertCircle } from 'lucide-react';
+import { Loader2, Plus, ToggleLeft, ToggleRight, Mail, Check, AlertCircle, Copy } from 'lucide-react';
 import { Coupon } from '@/lib/types';
 
 interface Book { id: string; title: string; }
@@ -10,6 +10,7 @@ export default function CouponsClient({ initialCoupons, books }: { initialCoupon
   const [coupons, setCoupons] = useState<Coupon[]>(initialCoupons);
   const [creating, setCreating] = useState(false);
   const [sendingEmail, setSendingEmail] = useState('');
+  const [copiedId, setCopiedId] = useState('');
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [form, setForm] = useState({ code: '', discount_percent: '', max_uses: '', expires_at: '', book_ids: [] as string[] });
 
@@ -78,6 +79,13 @@ export default function CouponsClient({ initialCoupons, books }: { initialCoupon
       : { type: 'error', text: data.error || 'Erreur envoi email.' }
     );
     setSendingEmail('');
+  };
+
+  const copyCode = (id: string, code: string) => {
+    navigator.clipboard.writeText(code).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(''), 2000);
+    });
   };
 
   const isExpired = (expires_at: string | null) =>
@@ -180,7 +188,21 @@ export default function CouponsClient({ initialCoupons, books }: { initialCoupon
                 : null;
               return (
                 <tr key={c.id} className={`hover:bg-charcoal/50 ${expired ? 'opacity-60' : ''}`}>
-                  <td className="px-4 py-3 font-mono text-gold-400">{c.code}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-gold-400">{c.code}</span>
+                      <button
+                        onClick={() => copyCode(c.id, c.code)}
+                        title="Copier le code"
+                        className="text-silver-500 hover:text-gold-400 transition-colors"
+                      >
+                        {copiedId === c.id
+                          ? <span className="flex items-center gap-1 text-emerald-400 text-xs"><Check className="w-3 h-3" />Copié</span>
+                          : <Copy className="w-3.5 h-3.5" />
+                        }
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-4 py-3 text-silver-300">
                     {c.discount_percent ? `${c.discount_percent}%` : c.discount_cents ? `$${(c.discount_cents / 100).toFixed(2)}` : '—'}
                   </td>
