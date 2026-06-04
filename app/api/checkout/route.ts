@@ -30,6 +30,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
     }
 
+    if (!book.price_cents || book.price_cents <= 0) {
+      return NextResponse.json({ error: 'Prix du livre non configuré. Contactez l\'administrateur.' }, { status: 400 });
+    }
+
     const user = await currentUser();
     const email = user?.emailAddresses[0]?.emailAddress || '';
     const fullName = user?.fullName || null;
