@@ -10,6 +10,10 @@
     {
       "path": "/api/cron/abandoned-checkouts",
       "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/wishlist-reminder",
+      "schedule": "0 10 * * 1"
     }
   ]
 }

@@ -6,6 +6,7 @@ import { Book } from '@/lib/types';
 import { formatPrice } from '@/lib/utils';
 import { Star, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useRef, useState } from 'react';
 
 interface BookCardProps {
   book: Book;
@@ -18,9 +19,44 @@ interface BookCardProps {
 }
 
 export default function BookCard({ book, owned = false, className, avgRating, reviewCount, isNew, animationDelay }: BookCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [tiltStyle, setTiltStyle] = useState<React.CSSProperties>({
+    transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)',
+    transition: 'transform 0.4s ease',
+  });
+  const [glowPos, setGlowPos] = useState<{ x: number; y: number } | null>(null);
+
+  function handleMouseMove(e: React.MouseEvent<HTMLDivElement>) {
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const cx = rect.width / 2;
+    const cy = rect.height / 2;
+    const rotateY = ((x - cx) / cx) * 12;
+    const rotateX = -((y - cy) / cy) * 12;
+    setTiltStyle({
+      transform: `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateZ(8px)`,
+      transition: 'transform 0.15s ease',
+    });
+    setGlowPos({ x: (x / rect.width) * 100, y: (y / rect.height) * 100 });
+  }
+
+  function handleMouseLeave() {
+    setTiltStyle({
+      transform: 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateZ(0px)',
+      transition: 'transform 0.4s ease',
+    });
+    setGlowPos(null);
+  }
+
   return (
     <Link href={owned ? `/lecture/${book.id}` : `/livre/${book.id}`}>
       <div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
         className={cn(
           'group relative card-dark overflow-hidden cursor-pointer',
           'transition-all duration-500 hover:-translate-y-2',
@@ -31,8 +67,22 @@ export default function BookCard({ book, owned = false, className, avgRating, re
         style={{
           animation: 'fadeInUp 0.5s ease forwards',
           animationDelay: animationDelay !== undefined ? `${animationDelay}ms` : '0ms',
+          ...tiltStyle,
         }}
       >
+        {/* Gold glow that follows cursor */}
+        {glowPos && (
+          <div
+            aria-hidden="true"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              pointerEvents: 'none',
+              zIndex: 10,
+              background: `radial-gradient(circle at ${glowPos.x}% ${glowPos.y}%, rgba(201,168,76,0.15), transparent 70%)`,
+            }}
+          />
+        )}
         {/* Cover */}
         <div className="relative aspect-[2/3] overflow-hidden bg-charcoal">
           {book.cover_url ? (
