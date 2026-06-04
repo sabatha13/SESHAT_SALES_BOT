@@ -3,8 +3,8 @@ import CheminQuiz from '@/components/quiz/CheminQuiz';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Quiz Chemin Initiatique — CDS Librairie Ésotérique',
-  description: 'Réponds à quelques questions et laisse les arcanes révéler la voie initiatique qui t\'appelle.',
+  title: 'Trouvez Votre Voie Initiatique — Quiz Ésotérique',
+  description: 'Quel chemin ésotérique vous correspond ? Répondez à notre quiz initiatique et découvrez votre voie : Magie, Kabbale, Alchimie, Hermétisme...',
 };
 
 export default function CheminPage() {

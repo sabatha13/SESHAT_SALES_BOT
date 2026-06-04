@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -68,6 +69,34 @@ const ACCESS_LABELS: Record<string, { label: string; color: string; icon: any }>
   purchase_and_subscription: { label: 'Achat ou Abonnement', color: 'bg-blue-500/10 text-blue-400 border-blue-500/20', icon: Crown },
   free_preview: { label: 'Aperçu gratuit', color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', icon: BookOpen },
 };
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const book = await getBook(params.id);
+  if (!book) return { title: 'Livre introuvable' };
+
+  const ogImages = book.cover_url
+    ? [{ url: book.cover_url, alt: book.title }]
+    : [];
+
+  return {
+    title: `${book.title} — Le Comte de Sabatha`,
+    description: book.short_description || book.description?.slice(0, 160) || '',
+    authors: [{ name: book.author || 'Le Comte de Sabatha' }],
+    openGraph: {
+      type: 'book',
+      url: `https://www.cdslibrairie.com/livre/${params.id}`,
+      title: `${book.title} — Le Comte de Sabatha`,
+      description: book.short_description || book.description?.slice(0, 160) || '',
+      images: ogImages,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${book.title} — Le Comte de Sabatha`,
+      description: book.short_description || book.description?.slice(0, 160) || '',
+      images: book.cover_url ? [book.cover_url] : [],
+    },
+  };
+}
 
 export default async function LivrePage({ params }: Props) {
   const book = await getBook(params.id);

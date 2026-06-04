@@ -5,8 +5,8 @@ import { createServerClient } from '@/lib/supabase/server';
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'L\'Auteur — Le Comte de Sabatha | CDS Librairie Ésotérique',
-  description: 'Biographie du Comte de Sabatha, chercheur autodidacte spécialisé dans les traditions ésotériques et mystiques.',
+  title: 'Le Comte de Sabatha — Auteur Ésotérique',
+  description: 'Découvrez Le Comte de Sabatha, chercheur autodidacte spécialisé en traditions ésotériques. Auteur de nombreux ouvrages sur la magie, la kabbale et la spiritualité comparée.',
 };
 
 export default async function AuteurPage() {

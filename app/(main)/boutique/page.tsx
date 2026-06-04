@@ -1,6 +1,18 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
 import { createServerClient } from '@/lib/supabase/server';
+
+export const metadata: Metadata = {
+  title: 'Boutique — Livres Ésotériques Numériques',
+  description: 'Parcourez notre collection de livres numériques : magie, kabbale, alchimie, tarot, numérologie, hermétisme et plus. Œuvres du Comte de Sabatha.',
+  openGraph: {
+    url: 'https://www.cdslibrairie.com/boutique',
+    type: 'website',
+    title: 'Boutique — Livres Ésotériques Numériques',
+    description: 'Parcourez notre collection de livres numériques : magie, kabbale, alchimie, tarot, numérologie, hermétisme et plus. Œuvres du Comte de Sabatha.',
+  },
+};
 import BookGrid from '@/components/books/BookGrid';
 import BoutiqueHero from '@/components/books/BoutiqueHero';
 import BoutiqueFiltres from '@/components/books/BoutiqueFiltres';

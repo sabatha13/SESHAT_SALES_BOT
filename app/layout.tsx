@@ -4,6 +4,7 @@ import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://www.cdslibrairie.com'),
   title: {
     default: "CDS Librairie Ésotérique",
     template: "%s | CDS Librairie Ésotérique",
@@ -18,14 +19,45 @@ export const metadata: Metadata = {
     "magie",
     "kabbale",
     "alchimie",
+    "Le Comte de Sabatha",
+    "livres ésotériques",
+    "magie noire",
+    "hermétisme",
+    "vodou haïtien",
+    "numérologie",
+    "tarot",
+    "rosicrucianisme",
+    "franc-maçonnerie",
+    "gnose",
+    "chamanisme",
+    "rituels magiques",
+    "spiritualité haïtienne",
   ],
-  authors: [{ name: "CDS Librairie Ésotérique" }],
+  authors: [{ name: "Le Comte de Sabatha" }],
+  alternates: {
+    canonical: 'https://www.cdslibrairie.com',
+  },
   openGraph: {
     type: "website",
     locale: "fr_FR",
+    url: 'https://www.cdslibrairie.com',
     siteName: "CDS Librairie Ésotérique",
     title: "CDS Librairie Ésotérique",
     description: "La bibliothèque numérique des arts ésotériques",
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'CDS Librairie Ésotérique — Le Comte de Sabatha',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "CDS Librairie Ésotérique",
+    description: "La bibliothèque numérique des arts ésotériques",
+    images: ['/og-image.jpg'],
   },
   robots: {
     index: true,

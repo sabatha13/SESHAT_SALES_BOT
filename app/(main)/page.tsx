@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Shield, Zap, Star, Package, Compass } from 'lucide-react';
 import PromotionDisplay from '@/components/promotion/PromotionDisplay';
@@ -8,6 +9,17 @@ import { formatPrice } from '@/lib/utils';
 import { Book } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = {
+  title: 'CDS Librairie Ésotérique — Livres Numériques de Magie & Spiritualité',
+  description: 'Explorez la bibliothèque numérique du Comte de Sabatha. Livres rares d\'ésotérisme, magie, kabbale, alchimie et spiritualité. Accès immédiat, lecture sécurisée.',
+  openGraph: {
+    url: 'https://www.cdslibrairie.com',
+    type: 'website',
+    title: 'CDS Librairie Ésotérique — Livres Numériques de Magie & Spiritualité',
+    description: 'Explorez la bibliothèque numérique du Comte de Sabatha. Livres rares d\'ésotérisme, magie, kabbale, alchimie et spiritualité. Accès immédiat, lecture sécurisée.',
+  },
+};
 
 const features = [
   { icon: Shield, title: 'Lecture Sécurisée', desc: 'Vos livres sont protégés par un filigrane dynamique et accessibles uniquement via notre lecteur.' },

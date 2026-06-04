@@ -1,6 +1,18 @@
 export const dynamic = 'force-dynamic';
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+export const metadata: Metadata = {
+  title: 'Collections & Packs — CDS Librairie Ésotérique',
+  description: 'Découvrez nos collections thématiques de livres ésotériques à prix réduit. Packs Magie, Kabbale, Initiation et plus.',
+  openGraph: {
+    url: 'https://www.cdslibrairie.com/packs',
+    type: 'website',
+    title: 'Collections & Packs — CDS Librairie Ésotérique',
+    description: 'Découvrez nos collections thématiques de livres ésotériques à prix réduit. Packs Magie, Kabbale, Initiation et plus.',
+  },
+};
 import { createServerClient } from '@/lib/supabase/server';
 import { formatPrice } from '@/lib/utils';
 
