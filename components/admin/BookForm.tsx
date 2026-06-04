@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Book } from '@/lib/types';
-import { Upload, Loader2 } from 'lucide-react';
+import { Upload, Loader2, Plus, X } from 'lucide-react';
 
 interface BookFormProps {
   book?: Book;
@@ -36,6 +36,8 @@ export default function BookForm({ book }: BookFormProps) {
     access_type: (book as any)?.access_type || 'purchase_only',
     estimated_reading_minutes: (book as any)?.estimated_reading_minutes ?? null,
   });
+  const [benefits, setBenefits] = useState<string[]>((book as any)?.key_benefits || []);
+  const [newBenefit, setNewBenefit] = useState('');
 
   const set = (k: string, v: string | boolean | number | null) => setForm(f => ({ ...f, [k]: v }));
 
@@ -47,6 +49,7 @@ export default function BookForm({ book }: BookFormProps) {
     try {
       const fd = new FormData();
       Object.entries(form).forEach(([k, v]) => fd.append(k, String(v)));
+      fd.append('key_benefits', JSON.stringify(benefits));
       if (pdfFile) fd.append('pdf', pdfFile);
       if (coverFile) fd.append('cover', coverFile);
 
@@ -180,6 +183,39 @@ export default function BookForm({ book }: BookFormProps) {
               onChange={e => setCoverFile(e.target.files?.[0] || null)}
             />
           </label>
+        </div>
+      </div>
+
+      {/* Key benefits */}
+      <div>
+        <label className={labelClass}>Dans ce livre vous découvrirez…</label>
+        <div className="space-y-2">
+          {benefits.map((b, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <span className="text-gold-500 text-sm">✦</span>
+              <span className="flex-1 text-silver-300 text-sm bg-charcoal/50 px-3 py-1.5 rounded-lg border border-ash/30">{b}</span>
+              <button type="button" onClick={() => setBenefits(prev => prev.filter((_, j) => j !== i))} className="text-silver-600 hover:text-red-400 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={newBenefit}
+              onChange={e => setNewBenefit(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newBenefit.trim()) { setBenefits(p => [...p, newBenefit.trim()]); setNewBenefit(''); } } }}
+              placeholder="Ex: Les secrets des rites initiatiques égyptiens"
+              className={inputClass}
+            />
+            <button
+              type="button"
+              onClick={() => { if (newBenefit.trim()) { setBenefits(p => [...p, newBenefit.trim()]); setNewBenefit(''); } }}
+              className="btn-ghost-gold px-3 py-2 rounded-xl text-sm flex-shrink-0"
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
         </div>
       </div>
 

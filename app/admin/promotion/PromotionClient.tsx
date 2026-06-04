@@ -24,6 +24,7 @@ export default function PromotionClient({ books, promotion: initial }: { books: 
   const [bookId, setBookId] = useState(initial?.book_id || '');
   const [type, setType] = useState<'popup' | 'banner'>(initial?.type || 'popup');
   const [isActive, setIsActive] = useState(initial?.is_active || false);
+  const [expiresAt, setExpiresAt] = useState((initial as any)?.expires_at ? new Date((initial as any).expires_at).toISOString().slice(0, 16) : '');
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -35,7 +36,7 @@ export default function PromotionClient({ books, promotion: initial }: { books: 
     const res = await fetch('/api/admin/promotion', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ book_id: bookId || null, type, is_active: isActive }),
+      body: JSON.stringify({ book_id: bookId || null, type, is_active: isActive, expires_at: expiresAt || null }),
     });
     if (res.ok) {
       setMsg({ type: 'success', text: 'Promotion sauvegardée avec succès !' });
@@ -128,6 +129,18 @@ export default function PromotionClient({ books, promotion: initial }: { books: 
             </div>
           </div>
         )}
+
+        {/* Expiry countdown */}
+        <div>
+          <p className="text-silver-400 text-sm mb-2">Date d'expiration (compte à rebours)</p>
+          <input
+            type="datetime-local"
+            value={expiresAt}
+            onChange={e => setExpiresAt(e.target.value)}
+            className="w-full bg-charcoal border border-ash/50 rounded-xl px-4 py-3 text-silver-300 text-sm focus:border-gold-500/50 focus:outline-none"
+          />
+          <p className="text-silver-600 text-xs mt-1">Laissez vide pour pas de compte à rebours.</p>
+        </div>
 
         <button
           onClick={save}

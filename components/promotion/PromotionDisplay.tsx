@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
-import { X, BookOpen, ArrowRight } from 'lucide-react';
+import { X, BookOpen, ArrowRight, Clock } from 'lucide-react';
 import { formatPrice } from '@/lib/utils';
 
 interface Promotion {
   type: 'popup' | 'banner';
+  expires_at?: string | null;
   book: {
     id: string;
     title: string;
@@ -15,6 +16,34 @@ interface Promotion {
     cover_url?: string;
     category: string;
   };
+}
+
+function Countdown({ expiresAt }: { expiresAt: string }) {
+  const calc = useCallback(() => {
+    const diff = Math.max(0, new Date(expiresAt).getTime() - Date.now());
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return { h, m, s, expired: diff === 0 };
+  }, [expiresAt]);
+
+  const [time, setTime] = useState(calc);
+  useEffect(() => {
+    const t = setInterval(() => setTime(calc()), 1000);
+    return () => clearInterval(t);
+  }, [calc]);
+
+  if (time.expired) return null;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return (
+    <div className="flex items-center gap-1.5 justify-center text-amber-400 text-xs font-mono mt-2">
+      <Clock className="w-3 h-3" />
+      <span>Offre expire dans</span>
+      <span className="bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.5 rounded font-bold">
+        {pad(time.h)}:{pad(time.m)}:{pad(time.s)}
+      </span>
+    </div>
+  );
 }
 
 export default function PromotionDisplay() {
@@ -61,6 +90,9 @@ export default function PromotionDisplay() {
                 <span className="text-silver-200 text-sm font-medium truncate">{promo.book.title}</span>
                 <span className="text-silver-400 text-sm mx-2">·</span>
                 <span className="text-gold-400 text-sm font-semibold">{formatPrice(promo.book.price)}</span>
+                {promo.expires_at && (
+                  <Countdown expiresAt={promo.expires_at} />
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3 flex-shrink-0">
@@ -114,7 +146,9 @@ export default function PromotionDisplay() {
             </span>
             <h3 className="font-serif text-xl text-silver-200 mt-3 mb-1 leading-snug">{promo.book.title}</h3>
             <p className="text-silver-500 text-sm mb-3">par {promo.book.author}</p>
-            <p className="text-gold-400 text-2xl font-semibold mb-5">{formatPrice(promo.book.price)}</p>
+            <p className="text-gold-400 text-2xl font-semibold mb-2">{formatPrice(promo.book.price)}</p>
+            {promo.expires_at && <Countdown expiresAt={promo.expires_at} />}
+            <div className="mb-3" />
 
             <Link
               href={`/livre/${promo.book.id}`}

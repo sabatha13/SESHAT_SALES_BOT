@@ -44,6 +44,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       subscription_included: fd.get('subscription_included') === 'true',
       access_type: (fd.get('access_type') as string) || 'purchase_only',
       estimated_reading_minutes: fd.get('estimated_reading_minutes') ? parseInt(fd.get('estimated_reading_minutes') as string) : null,
+      key_benefits: (() => { try { return JSON.parse(fd.get('key_benefits') as string || '[]'); } catch { return []; } })(),
     };
 
     const pdfFile = fd.get('pdf') as File | null;

@@ -34,6 +34,7 @@ export async function POST(req: NextRequest) {
     const subscription_included = fd.get('subscription_included') === 'true';
     const access_type = (fd.get('access_type') as string) || 'purchase_only';
     const estimated_reading_minutes = fd.get('estimated_reading_minutes') ? parseInt(fd.get('estimated_reading_minutes') as string) : null;
+    const key_benefits = (() => { try { return JSON.parse(fd.get('key_benefits') as string || '[]'); } catch { return []; } })();
     const pdfFile = fd.get('pdf') as File | null;
     const coverFile = fd.get('cover') as File | null;
 
@@ -62,7 +63,7 @@ export async function POST(req: NextRequest) {
         title, author, description, short_description,
         price, category, tags, page_count, language,
         is_featured, is_published, download_allowed, subscription_included,
-        access_type, estimated_reading_minutes, cover_url, pdf_path: pdfName,
+        access_type, estimated_reading_minutes, key_benefits, cover_url, pdf_path: pdfName,
       })
       .select()
       .single();

@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   if (!profile?.is_admin) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
 
   const body = await req.json();
-  const { book_id, type, is_active } = body;
+  const { book_id, type, is_active, expires_at } = body;
 
   const { data: existing } = await supabase.from('promotions').select('id').single();
 
@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
   if (existing) {
     const { data } = await supabase
       .from('promotions')
-      .update({ book_id, type, is_active, updated_at: new Date().toISOString() })
+      .update({ book_id, type, is_active, expires_at: expires_at || null, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
       .select('*, book:books(id, title, author, price, cover_url, category)')
       .single();
@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
   } else {
     const { data } = await supabase
       .from('promotions')
-      .insert({ book_id, type, is_active })
+      .insert({ book_id, type, is_active, expires_at: expires_at || null })
       .select('*, book:books(id, title, author, price, cover_url, category)')
       .single();
     result = data;

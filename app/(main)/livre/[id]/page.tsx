@@ -7,6 +7,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { auth } from '@clerk/nextjs/server';
 import PurchaseButton from '@/components/books/PurchaseButton';
 import BookPreviewButton from '@/components/books/BookPreviewButton';
+import TrustBadge from '@/components/books/TrustBadge';
 import WishlistButton from '@/components/books/WishlistButton';
 import StarRating from '@/components/ui/StarRating';
 import BookCard from '@/components/books/BookCard';
@@ -178,6 +179,8 @@ export default async function LivrePage({ params }: Props) {
 
               {owned && <p className="text-center text-emerald-400 text-xs">✓ Vous possédez ce livre</p>}
 
+              <TrustBadge />
+
               {/* Download button */}
               {book.download_allowed && (owned || book.access_type === 'free_preview') ? (
                 <DownloadButton bookId={book.id} />
@@ -191,10 +194,6 @@ export default async function LivrePage({ params }: Props) {
                 </div>
               )}
 
-              <div className="text-center text-silver-500 text-xs space-y-1">
-                <p>Accès immédiat · Lecture sécurisée</p>
-                <p>Paiement sécurisé par Stripe</p>
-              </div>
             </div>
           </div>
         </div>
@@ -243,6 +242,21 @@ export default async function LivrePage({ params }: Props) {
               "{book.short_description}"
             </p>
           </div>
+
+          {/* Key benefits */}
+          {book.key_benefits?.length > 0 && (
+            <div className="card-dark p-6 rounded-2xl border border-gold-600/20">
+              <h2 className="font-serif text-xl text-gold-300 mb-5">Dans ce livre vous découvrirez…</h2>
+              <ul className="space-y-3">
+                {book.key_benefits.map((benefit: string, i: number) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="text-gold-500 text-sm mt-0.5 flex-shrink-0">✦</span>
+                    <span className="text-silver-300 text-sm leading-relaxed">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Full description */}
           <div>
