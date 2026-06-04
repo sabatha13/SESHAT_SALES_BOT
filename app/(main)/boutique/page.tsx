@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic';
+
 import { createServerClient } from '@/lib/supabase/server';
 import BookGrid from '@/components/books/BookGrid';
 import { Book } from '@/lib/types';
