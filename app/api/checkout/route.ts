@@ -71,8 +71,7 @@ export async function POST(req: NextRequest) {
             currency: 'usd',
             product_data: {
               name: book.title,
-              description: book.short_description,
-              images: book.cover_url ? [book.cover_url] : [],
+              ...(book.short_description ? { description: book.short_description.slice(0, 500) } : {}),
             },
             unit_amount: book.price_cents,
           },
@@ -98,7 +97,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    console.error('Checkout error:', err);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    console.error('Checkout error:', err?.message || err);
+    return NextResponse.json({ error: err?.message || 'Erreur serveur' }, { status: 500 });
   }
 }
