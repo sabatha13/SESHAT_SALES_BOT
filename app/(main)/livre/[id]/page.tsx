@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import { auth } from '@clerk/nextjs/server';
 import PurchaseButton from '@/components/books/PurchaseButton';
+import BookPreviewButton from '@/components/books/BookPreviewButton';
 import WishlistButton from '@/components/books/WishlistButton';
 import StarRating from '@/components/ui/StarRating';
 import BookCard from '@/components/books/BookCard';
@@ -168,6 +169,11 @@ export default async function LivrePage({ params }: Props) {
                     </Link>
                   )}
                 </div>
+              )}
+
+              {/* Preview — for visitors who don't yet own/read the book */}
+              {!owned && !canReadViaSubscription && book.access_type !== 'free_preview' && (
+                <BookPreviewButton bookId={book.id} bookTitle={book.title} />
               )}
 
               {owned && <p className="text-center text-emerald-400 text-xs">✓ Vous possédez ce livre</p>}
