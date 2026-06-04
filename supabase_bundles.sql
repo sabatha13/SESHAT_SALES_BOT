@@ -1,5 +1,5 @@
 -- Bundles / Collections : packs de livres vendus ensemble à prix réduit
-create table if not exists public.bundles (
+create table if not exists bundles (
   id uuid primary key default gen_random_uuid(),
   title text not null,
   slug text unique,
@@ -11,14 +11,18 @@ create table if not exists public.bundles (
   created_at timestamptz not null default now()
 );
 
--- Tracer l'achat d'un pack (en plus des purchases par livre)
-alter table public.purchases
-  add column if not exists bundle_id uuid references public.bundles(id);
+-- Tracer l'achat d'un pack (seulement si la table purchases existe)
+do $$
+begin
+  if exists (select 1 from information_schema.tables where table_name = 'purchases') then
+    alter table purchases add column if not exists bundle_id uuid references bundles(id);
+  end if;
+end $$;
 
 -- Lecture publique des packs publiés
-alter table public.bundles enable row level security;
+alter table bundles enable row level security;
 
-drop policy if exists "Public read published bundles" on public.bundles;
+drop policy if exists "Public read published bundles" on bundles;
 create policy "Public read published bundles"
-  on public.bundles for select
+  on bundles for select
   using (is_published = true);
