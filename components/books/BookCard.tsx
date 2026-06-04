@@ -11,17 +11,28 @@ interface BookCardProps {
   book: Book;
   owned?: boolean;
   className?: string;
+  avgRating?: number;
+  reviewCount?: number;
+  isNew?: boolean;
+  animationDelay?: number;
 }
 
-export default function BookCard({ book, owned = false, className }: BookCardProps) {
+export default function BookCard({ book, owned = false, className, avgRating, reviewCount, isNew, animationDelay }: BookCardProps) {
   return (
     <Link href={owned ? `/lecture/${book.id}` : `/livre/${book.id}`}>
-      <div className={cn(
-        'group relative card-dark overflow-hidden cursor-pointer',
-        'transition-all duration-500 hover:-translate-y-2',
-        'hover:shadow-gold-md gold-border-hover',
-        className
-      )}>
+      <div
+        className={cn(
+          'group relative card-dark overflow-hidden cursor-pointer',
+          'transition-all duration-500 hover:-translate-y-2',
+          'hover:shadow-gold-md gold-border-hover',
+          'opacity-0',
+          className
+        )}
+        style={{
+          animation: 'fadeInUp 0.5s ease forwards',
+          animationDelay: animationDelay !== undefined ? `${animationDelay}ms` : '0ms',
+        }}
+      >
         {/* Cover */}
         <div className="relative aspect-[2/3] overflow-hidden bg-charcoal">
           {book.cover_url ? (
@@ -56,6 +67,21 @@ export default function BookCard({ book, owned = false, className }: BookCardPro
             </div>
           )}
 
+          {/* Nouveau badge */}
+          {isNew && !owned && (
+            <div className="absolute top-2 right-2 bg-amber-600/90 text-amber-100 text-[10px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full">
+              Nouveau
+            </div>
+          )}
+
+          {/* Abonnement badge */}
+          {book.subscription_included && (
+            <div className="absolute bottom-2 left-2 flex items-center gap-1 bg-purple-900/80 text-purple-300 text-[10px] font-semibold uppercase tracking-widest px-2 py-1 rounded-full border border-purple-700/50">
+              <span>♛</span>
+              Abonnement
+            </div>
+          )}
+
           {/* Quick read CTA on hover */}
           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             <div className="btn-gold px-4 py-2 rounded-lg text-sm font-medium shadow-gold-md">
@@ -74,6 +100,11 @@ export default function BookCard({ book, owned = false, className }: BookCardPro
               {book.title}
             </h3>
             <p className="text-silver-500 text-xs mt-1">{book.author}</p>
+            {avgRating !== undefined && avgRating > 0 && (
+              <p className="text-gold-400 text-xs mt-1">
+                ★ {avgRating.toFixed(1)} <span className="text-silver-500">({reviewCount} avis)</span>
+              </p>
+            )}
           </div>
 
           {!owned && (
