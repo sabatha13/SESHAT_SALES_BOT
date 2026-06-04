@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       author: fd.get('author'),
       description: fd.get('description'),
       short_description: fd.get('short_description'),
-      price: Math.round(parseFloat(fd.get('price') as string) * 100),
+      price_cents: Math.round(parseFloat(fd.get('price') as string) * 100),
       category: fd.get('category'),
       tags: (fd.get('tags') as string).split(',').map(t => t.trim()).filter(Boolean),
       page_count: parseInt(fd.get('page_count') as string) || 0,
