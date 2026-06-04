@@ -27,10 +27,39 @@ export async function POST(req: NextRequest) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       if (session.mode === 'payment' && session.payment_status === 'paid') {
-        await supabase
-          .from('purchases')
-          .update({ status: 'completed', stripe_payment_intent: session.payment_intent as string })
-          .eq('stripe_session_id', session.id);
+        // Bundle purchase: unlock every book in the pack
+        if (session.metadata?.type === 'bundle') {
+          const { bundleId, userId, bookIds } = session.metadata;
+          const ids = (bookIds || '').split(',').filter(Boolean);
+          if (userId && ids.length) {
+            const perBook = Math.round((session.amount_total || 0) / ids.length);
+            for (const bookId of ids) {
+              const { data: existing } = await supabase
+                .from('purchases')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('book_id', bookId)
+                .eq('status', 'completed')
+                .maybeSingle();
+              if (!existing) {
+                await supabase.from('purchases').insert({
+                  user_id: userId,
+                  book_id: bookId,
+                  bundle_id: bundleId,
+                  stripe_session_id: session.id,
+                  stripe_payment_intent: session.payment_intent as string,
+                  amount: perBook,
+                  status: 'completed',
+                });
+              }
+            }
+          }
+        } else {
+          await supabase
+            .from('purchases')
+            .update({ status: 'completed', stripe_payment_intent: session.payment_intent as string })
+            .eq('stripe_session_id', session.id);
+        }
       }
       if (session.mode === 'subscription' && session.subscription) {
         const { userId, planId } = session.metadata || {};

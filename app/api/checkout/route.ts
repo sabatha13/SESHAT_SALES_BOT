@@ -30,6 +30,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
     }
 
+    if (!book.price || book.price <= 0) {
+      return NextResponse.json({ error: 'Prix du livre non configuré. Contactez l\'administrateur.' }, { status: 400 });
+    }
+
     const user = await currentUser();
     const email = user?.emailAddresses[0]?.emailAddress || '';
     const fullName = user?.fullName || null;
@@ -68,13 +72,12 @@ export async function POST(req: NextRequest) {
       line_items: [
         {
           price_data: {
-            currency: 'eur',
+            currency: 'usd',
             product_data: {
               name: book.title,
-              description: book.short_description,
-              images: book.cover_url ? [book.cover_url] : [],
+              ...(book.short_description ? { description: book.short_description.slice(0, 500) } : {}),
             },
-            unit_amount: book.price_cents,
+            unit_amount: book.price,
           },
           quantity: 1,
         },
@@ -92,13 +95,13 @@ export async function POST(req: NextRequest) {
       user_id: profile.id,
       book_id: book.id,
       stripe_session_id: session.id,
-      amount: book.price_cents,
+      amount: book.price,
       status: 'pending',
     });
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
-    console.error('Checkout error:', err);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    console.error('Checkout error:', err?.message || err);
+    return NextResponse.json({ error: err?.message || 'Erreur serveur' }, { status: 500 });
   }
 }

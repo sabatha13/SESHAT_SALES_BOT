@@ -1,5 +1,15 @@
 {
   "framework": "nextjs",
   "buildCommand": "npm run build",
-  "installCommand": "npm ci"
+  "installCommand": "npm ci",
+  "crons": [
+    {
+      "path": "/api/cron/subscription-reminders",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/abandoned-checkouts",
+      "schedule": "0 */6 * * *"
+    }
+  ]
 }

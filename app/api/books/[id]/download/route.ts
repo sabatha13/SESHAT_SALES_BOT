@@ -37,7 +37,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       .eq('status', 'completed')
       .single();
 
-    if (!purchase) return NextResponse.json({ error: 'Acces refuse' }, { status: 403 });
+    // Only users who purchased the book can download — subscription access does NOT grant download rights
+    if (!purchase) return NextResponse.json({ error: 'Téléchargement réservé aux acheteurs. Les abonnés peuvent lire en ligne uniquement.' }, { status: 403 });
   }
 
   // Rate-limit: max 5 downloads per day per user per book

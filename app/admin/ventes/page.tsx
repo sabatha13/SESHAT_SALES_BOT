@@ -7,7 +7,7 @@ export default async function VentesPage() {
   const supabase = createServerClient();
   const { data } = await supabase
     .from('purchases')
-    .select('*, profiles(email, full_name), books(title, cover_url)')
+    .select('*, profiles(email, full_name), books(title, cover_url), payment_method')
     .order('created_at', { ascending: false });
   return <VentesClient sales={data || []} />;
 }

@@ -6,9 +6,12 @@ import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import { auth } from '@clerk/nextjs/server';
 import PurchaseButton from '@/components/books/PurchaseButton';
+import BookPreviewButton from '@/components/books/BookPreviewButton';
+import TrustBadge from '@/components/books/TrustBadge';
 import WishlistButton from '@/components/books/WishlistButton';
 import StarRating from '@/components/ui/StarRating';
 import BookCard from '@/components/books/BookCard';
+import { getCoPurchasedBooks, getSimilarBooks } from '@/lib/recommendations';
 import ReviewForm from './ReviewForm';
 import DownloadButton from './DownloadButton';
 import { formatPrice, formatDate } from '@/lib/utils';
@@ -28,18 +31,6 @@ async function getBook(id: string) {
     .eq('is_published', true)
     .single();
   return data;
-}
-
-async function getRelatedBooks(category: string, excludeId: string): Promise<Book[]> {
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from('books')
-    .select('*')
-    .eq('category', category)
-    .eq('is_published', true)
-    .neq('id', excludeId)
-    .limit(4);
-  return (data as Book[]) || [];
 }
 
 async function getReviews(bookId: string) {
@@ -83,11 +74,16 @@ export default async function LivrePage({ params }: Props) {
   if (!book) notFound();
 
   const { userId } = await auth();
-  const [userData, reviews, relatedBooks] = await Promise.all([
+  const [userData, reviews, coPurchasedBooks] = await Promise.all([
     userId ? getUserData(userId, book.id) : Promise.resolve({ owned: false, hasSubscription: false, inWishlist: false }),
     getReviews(book.id),
-    getRelatedBooks(book.category, book.id),
+    getCoPurchasedBooks(book.id, 4),
   ]);
+
+  // Only treat co-purchase as a real signal when there are at least 2 results.
+  const coPurchased = coPurchasedBooks.length >= 2 ? coPurchasedBooks : [];
+  // De-dupe: similar books exclude anything already shown in the co-purchase section.
+  const similarBooks = await getSimilarBooks(book, coPurchased.map(b => b.id), 4);
 
   const { owned, hasSubscription, inWishlist } = userData;
   const canReadViaSubscription = hasSubscription && (book.subscription_included || book.access_type === 'subscription_only' || book.access_type === 'purchase_and_subscription');
@@ -170,7 +166,14 @@ export default async function LivrePage({ params }: Props) {
                 </div>
               )}
 
+              {/* Preview — for visitors who don't yet own/read the book */}
+              {!owned && !canReadViaSubscription && book.access_type !== 'free_preview' && (
+                <BookPreviewButton bookId={book.id} bookTitle={book.title} />
+              )}
+
               {owned && <p className="text-center text-emerald-400 text-xs">✓ Vous possédez ce livre</p>}
+
+              <TrustBadge />
 
               {/* Download button */}
               {book.download_allowed && (owned || book.access_type === 'free_preview') ? (
@@ -185,10 +188,6 @@ export default async function LivrePage({ params }: Props) {
                 </div>
               )}
 
-              <div className="text-center text-silver-500 text-xs space-y-1">
-                <p>Accès immédiat · Lecture sécurisée</p>
-                <p>Paiement sécurisé par Stripe</p>
-              </div>
             </div>
           </div>
         </div>
@@ -232,11 +231,26 @@ export default async function LivrePage({ params }: Props) {
           </div>
 
           {/* Short description */}
-          <div className="card-dark p-5 rounded-2xl border-l-2 border-gold-600/50">
+          <div className="card-dark p-5 rounded-2xl border-l-2 border-gold-600/50 text-center">
             <p className="text-silver-300 font-serif text-lg italic leading-relaxed">
               "{book.short_description}"
             </p>
           </div>
+
+          {/* Key benefits */}
+          {book.key_benefits?.length > 0 && (
+            <div className="card-dark p-6 rounded-2xl border border-gold-600/20">
+              <h2 className="font-serif text-xl text-gold-300 mb-5">Dans ce livre vous découvrirez…</h2>
+              <ul className="space-y-3">
+                {book.key_benefits.map((benefit: string, i: number) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <span className="text-gold-500 text-sm mt-0.5 flex-shrink-0">✦</span>
+                    <span className="text-silver-300 text-sm leading-relaxed">{benefit}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           {/* Full description */}
           <div>
@@ -289,7 +303,7 @@ export default async function LivrePage({ params }: Props) {
               <p className="text-silver-500 text-sm">Aucun avis pour l'instant.</p>
             )}
 
-            {userId && owned && (
+            {userId && (owned || canReadViaSubscription) && (
               <div className="mt-6">
                 <ReviewForm bookId={book.id} />
               </div>
@@ -298,13 +312,26 @@ export default async function LivrePage({ params }: Props) {
         </div>
       </div>
 
-      {/* Related books */}
-      {relatedBooks.length > 0 && (
+      {/* Co-purchase recommendations */}
+      {coPurchased.length > 0 && (
         <div className="mt-16">
           <div className="divider-gold mb-8" />
-          <h2 className="font-serif text-2xl text-silver-200 mb-6">Dans la même catégorie</h2>
+          <h2 className="font-serif text-2xl text-silver-200 mb-6">Lecteurs ont aussi exploré</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {relatedBooks.map(rb => (
+            {coPurchased.map(rb => (
+              <BookCard key={rb.id} book={rb} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Similarity recommendations */}
+      {similarBooks.length > 0 && (
+        <div className="mt-16">
+          <div className="divider-gold mb-8" />
+          <h2 className="font-serif text-2xl text-silver-200 mb-6">Dans le même courant</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {similarBooks.map(rb => (
               <BookCard key={rb.id} book={rb} />
             ))}
           </div>

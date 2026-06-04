@@ -5,9 +5,11 @@ interface BookGridProps {
   books: Book[];
   ownedBookIds?: string[];
   emptyMessage?: string;
+  ratings?: Record<string, { avg: number; count: number }>;
+  newBookIds?: Set<string>;
 }
 
-export default function BookGrid({ books, ownedBookIds = [], emptyMessage = 'Aucun livre disponible.' }: BookGridProps) {
+export default function BookGrid({ books, ownedBookIds = [], emptyMessage = 'Aucun livre disponible.', ratings, newBookIds }: BookGridProps) {
   if (books.length === 0) {
     return (
       <div className="text-center py-20">
@@ -19,13 +21,20 @@ export default function BookGrid({ books, ownedBookIds = [], emptyMessage = 'Auc
 
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-      {books.map(book => (
-        <BookCard
-          key={book.id}
-          book={book}
-          owned={ownedBookIds.includes(book.id)}
-        />
-      ))}
+      {books.map((book, index) => {
+        const rating = ratings?.[book.id];
+        return (
+          <BookCard
+            key={book.id}
+            book={book}
+            owned={ownedBookIds.includes(book.id)}
+            avgRating={rating?.avg}
+            reviewCount={rating?.count}
+            isNew={newBookIds?.has(book.id)}
+            animationDelay={index * 80}
+          />
+        );
+      })}
     </div>
   );
 }

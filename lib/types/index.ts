@@ -148,6 +148,7 @@ export interface Coupon {
   max_uses: number | null;
   uses_count: number;
   expires_at: string | null;
+  book_ids: string[] | null;
   is_active: boolean;
   created_at: string;
 }

@@ -36,8 +36,8 @@ export default function PurchaseButton({ bookId, price, owned }: PurchaseButtonP
       } else {
         throw new Error(data.error || 'Erreur lors du paiement');
       }
-    } catch (err) {
-      alert('Une erreur est survenue. Veuillez réessayer.');
+    } catch (err: any) {
+      alert(err?.message || 'Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }

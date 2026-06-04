@@ -1,5 +1,13 @@
 import Link from 'next/link';
-import { ArrowRight, Shield, Zap, Star } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Star, Package, Compass } from 'lucide-react';
+import PromotionDisplay from '@/components/promotion/PromotionDisplay';
+import CitationBand from '@/components/home/CitationBand';
+import BookCard from '@/components/books/BookCard';
+import { createServerClient } from '@/lib/supabase/server';
+import { formatPrice } from '@/lib/utils';
+import { Book } from '@/lib/types';
+
+export const dynamic = 'force-dynamic';
 
 const features = [
   { icon: Shield, title: 'Lecture Sécurisée', desc: 'Vos livres sont protégés par un filigrane dynamique et accessibles uniquement via notre lecteur.' },
@@ -7,11 +15,49 @@ const features = [
   { icon: Star, title: 'Sélection Premium', desc: 'Des œuvres soigneusement sélectionnées pour leur qualité et leur profondeur ésotérique.' },
 ];
 
-const categories = ['Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme'];
+const categories = ['Magie', 'Kabbale', 'Alchimie', 'Astrologie', 'Tarot', 'Numérologie', 'Hermétisme', 'Chamanisme', 'Vodou', 'Eso-psychologie', 'Rituels', 'Gnose', 'Tantra / Magie Sexuelle', 'Franc-Maçonnerie', 'Rosicrucianisme'];
 
-export default function HomePage() {
+async function getFeaturedBooks(): Promise<Book[]> {
+  try {
+    const supabase = createServerClient();
+    // Prefer featured books, fall back to most recent
+    const { data: featured } = await supabase
+      .from('books').select('*').eq('is_published', true).eq('is_featured', true)
+      .order('created_at', { ascending: false }).limit(5);
+    if (featured && featured.length >= 3) return featured as Book[];
+    const { data: recent } = await supabase
+      .from('books').select('*').eq('is_published', true)
+      .order('created_at', { ascending: false }).limit(5);
+    return (recent as Book[]) || [];
+  } catch { return []; }
+}
+
+async function getFeaturedBundles() {
+  try {
+    const supabase = createServerClient();
+    const { data } = await supabase
+      .from('bundles').select('*').eq('is_published', true)
+      .order('created_at', { ascending: false }).limit(3);
+    if (!data?.length) return [];
+    // Gather covers for the books in these bundles
+    const bookIds = Array.from(new Set(data.flatMap((b: any) => b.book_ids || [])));
+    const { data: books } = await supabase.from('books').select('id, title, price, cover_url').in('id', bookIds);
+    const bookMap = new Map((books || []).map((b: any) => [b.id, b]));
+    return data.map((bundle: any) => {
+      const items = (bundle.book_ids || []).map((id: string) => bookMap.get(id)).filter(Boolean);
+      const totalValue = items.reduce((s: number, b: any) => s + (b.price || 0), 0);
+      const discount = totalValue > 0 ? Math.round((1 - bundle.price / totalValue) * 100) : 0;
+      return { ...bundle, items, totalValue, discount };
+    });
+  } catch { return []; }
+}
+
+export default async function HomePage() {
+  const [featuredBooks, featuredBundles] = await Promise.all([getFeaturedBooks(), getFeaturedBundles()]);
+
   return (
     <>
+      <PromotionDisplay />
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-glow-gold pointer-events-none" />
         <div className="absolute inset-0 bg-dark-gradient pointer-events-none" />
@@ -51,6 +97,86 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Rotating author citations */}
+      <CitationBand />
+
+      {/* Featured books */}
+      {featuredBooks.length > 0 && (
+        <section className="py-20 px-4 bg-obsidian">
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-end justify-between mb-10 flex-wrap gap-4">
+              <div>
+                <p className="text-gold-600 uppercase tracking-[0.3em] text-xs mb-3">À découvrir</p>
+                <h2 className="font-serif text-4xl text-silver-200 font-light">Œuvres en vedette</h2>
+              </div>
+              <Link href="/boutique" className="btn-ghost-gold px-5 py-2 rounded-lg text-sm inline-flex items-center gap-2 group whitespace-nowrap">
+                Toute la collection
+                <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+              {featuredBooks.map((book, i) => (
+                <BookCard key={book.id} book={book} animationDelay={i * 80} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Featured bundles / packs */}
+      {featuredBundles.length > 0 && (
+        <section className="py-20 px-4 bg-void">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <p className="text-gold-600 uppercase tracking-[0.3em] text-xs mb-3">Économisez</p>
+              <h2 className="font-serif text-4xl text-silver-200 font-light mb-4">Nos Collections</h2>
+              <div className="divider-gold mt-4" />
+              <p className="text-silver-500 text-sm max-w-xl mx-auto mt-4">
+                Des sélections d'œuvres réunies à prix réduit pour approfondir un thème.
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {featuredBundles.map((bundle: any) => (
+                <Link
+                  key={bundle.id}
+                  href={`/packs/${bundle.slug || bundle.id}`}
+                  className="card-dark rounded-2xl overflow-hidden gold-border-hover hover:-translate-y-1 transition-all duration-300 group"
+                >
+                  <div className="relative aspect-[16/9] bg-charcoal overflow-hidden">
+                    {bundle.cover_url ? (
+                      <img src={bundle.cover_url} alt={bundle.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 h-full p-4">
+                        {bundle.items.slice(0, 3).map((b: any) => (
+                          b.cover_url
+                            ? <img key={b.id} src={b.cover_url} alt="" className="h-full w-auto rounded shadow-lg object-cover" />
+                            : <Package key={b.id} className="w-8 h-8 text-gold-700/40" />
+                        ))}
+                      </div>
+                    )}
+                    {bundle.discount > 0 && (
+                      <span className="absolute top-3 right-3 bg-emerald-500/90 text-void text-xs font-bold px-2.5 py-1 rounded-full">
+                        −{bundle.discount}%
+                      </span>
+                    )}
+                  </div>
+                  <div className="p-5">
+                    <p className="text-gold-600 text-[10px] uppercase tracking-widest mb-1">{bundle.items.length} livres</p>
+                    <h3 className="font-serif text-lg text-silver-200 group-hover:text-gold-300 transition-colors leading-snug mb-3">{bundle.title}</h3>
+                    <div className="flex items-baseline gap-2">
+                      <span className="gold-text font-semibold text-lg">{formatPrice(bundle.price)}</span>
+                      {bundle.totalValue > bundle.price && (
+                        <span className="text-silver-600 text-sm line-through">{formatPrice(bundle.totalValue)}</span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="py-20 px-4 bg-void">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
@@ -61,7 +187,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
             <div className="flex flex-col items-center gap-6">
               <div className="w-48 h-48 rounded-full overflow-hidden border-2 border-gold-500/40 shadow-[0_0_30px_rgba(201,168,76,0.2)]">
-                <img src="https://i.postimg.cc/fbSpfnb0/3b0d1-my-pic-5-1-819x1024-1.webp" alt="Le Comte de Sabatha" className="w-full h-full object-cover" />
+                <img src="https://oriiunftyumqcrniepux.supabase.co/storage/v1/object/public/IMAGE/3b0d1-my-pic-5-1-819x1024-1.webp" alt="Le Comte de Sabatha" className="w-full h-full object-cover" />
               </div>
               <div className="text-center">
                 <h3 className="font-serif text-xl text-gold-300 mb-2">Le Comte de Sabatha</h3>
@@ -110,7 +236,36 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Quiz Chemin Initiatique */}
       <section className="py-20 px-4 bg-obsidian">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative card-dark rounded-3xl overflow-hidden p-10 md:p-14 text-center shadow-[0_0_60px_rgba(201,168,76,0.12)] border border-gold-500/20">
+            <span className="absolute top-6 left-8 text-gold-600/15 text-4xl select-none animate-pulse pointer-events-none" style={{ animationDuration: '4s' }}>✦</span>
+            <span className="absolute bottom-6 right-10 text-gold-600/15 text-4xl select-none animate-pulse pointer-events-none" style={{ animationDuration: '5s', animationDelay: '1s' }}>✧</span>
+            <span className="absolute top-10 right-12 text-gold-600/10 text-5xl select-none animate-pulse pointer-events-none" style={{ animationDuration: '6s' }}>⊕</span>
+
+            <div className="relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-gold-500/10 flex items-center justify-center mx-auto mb-6 border border-gold-500/30">
+                <Compass className="w-6 h-6 text-gold-500" />
+              </div>
+              <p className="text-gold-600 uppercase tracking-[0.3em] text-xs mb-3">Quiz Initiatique</p>
+              <h2 className="font-serif text-3xl md:text-5xl text-gold-400 font-light mb-4 leading-tight">
+                Quelle est votre voie ?
+              </h2>
+              <p className="text-silver-400 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-8">
+                Magie, Kabbale, Alchimie, Chamanisme… Laissez votre intuition parler à travers quelques
+                questions, et découvrez l&apos;art occulte qui résonne en vous.
+              </p>
+              <Link href="/chemin" className="btn-gold px-8 py-4 rounded-xl text-base font-medium inline-flex items-center gap-2 group">
+                Trouver ma voie
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-4 bg-void">
         <div className="max-w-3xl mx-auto text-center">
           <p className="ornament text-3xl mb-6">✦</p>
           <h2 className="font-serif text-4xl md:text-5xl text-silver-200 font-light mb-4">

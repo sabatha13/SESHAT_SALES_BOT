@@ -3,6 +3,8 @@ import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
 import ReviewModerationClient from './ReviewModerationClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminAvisPage() {
   const { userId } = await auth();
   if (!userId) redirect('/connexion');
@@ -17,8 +19,11 @@ export default async function AdminAvisPage() {
     .order('created_at', { ascending: false });
 
   return (
-    <div className="p-8 max-w-5xl mx-auto">
-      <h1 className="font-serif text-2xl gold-text mb-8">Modération des avis</h1>
+    <div className="space-y-6 max-w-4xl">
+      <div>
+        <h1 className="font-serif text-3xl text-silver-200 mb-1">Modération des avis</h1>
+        <p className="text-silver-500 text-sm">Approuver, rejeter ou supprimer les avis clients</p>
+      </div>
       <ReviewModerationClient initialReviews={reviews || []} />
     </div>
   );

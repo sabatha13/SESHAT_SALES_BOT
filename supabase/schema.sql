@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   full_name TEXT,
   avatar_url TEXT,
   is_admin BOOLEAN DEFAULT FALSE,
+  is_banned BOOLEAN DEFAULT FALSE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -206,6 +207,7 @@ CREATE TABLE IF NOT EXISTS coupons (
   max_uses INTEGER,
   uses_count INTEGER DEFAULT 0,
   expires_at TIMESTAMPTZ,
+  book_ids UUID[] DEFAULT NULL,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );

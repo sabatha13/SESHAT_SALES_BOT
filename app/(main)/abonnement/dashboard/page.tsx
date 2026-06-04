@@ -4,8 +4,8 @@ import { createServerClient } from '@/lib/supabase/server';
 import SubscriptionBadge from '@/components/subscription/SubscriptionBadge';
 import SubscriptionDashboardClient from './SubscriptionDashboardClient';
 import BookCard from '@/components/books/BookCard';
-import { AlertTriangle, BookOpen } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { AlertTriangle, BookOpen, Clock, Receipt } from 'lucide-react';
+import { formatDate, formatPrice } from '@/lib/utils';
 
 export default async function SubscriptionDashboardPage() {
   const { userId } = await auth();
@@ -31,6 +31,13 @@ export default async function SubscriptionDashboardPage() {
 
   if (!sub) redirect('/abonnement');
 
+  const { data: payments } = await supabase
+    .from('purchases')
+    .select('id, created_at, amount, payment_method, status, book:books(title)')
+    .eq('user_id', profile.id)
+    .in('status', ['completed', 'external'])
+    .order('created_at', { ascending: false });
+
   const { data: subBooks } = await supabase
     .from('books')
     .select('*')
@@ -40,6 +47,14 @@ export default async function SubscriptionDashboardPage() {
     .limit(12);
 
   const plan = sub.plan as any;
+  const isManual = !plan;
+
+  // Days remaining
+  const daysLeft = sub.current_period_end
+    ? Math.ceil((new Date(sub.current_period_end).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  const expiringSoon = daysLeft !== null && daysLeft <= 7 && daysLeft > 0;
+  const expired = daysLeft !== null && daysLeft <= 0;
 
   return (
     <div className="min-h-screen py-16 px-4 max-w-5xl mx-auto">
@@ -56,32 +71,81 @@ export default async function SubscriptionDashboardPage() {
         </div>
       )}
 
+      {/* Expiry warning */}
+      {expiringSoon && (
+        <div className="flex items-start gap-3 bg-yellow-900/20 border border-yellow-500/30 rounded-2xl p-5 mb-8">
+          <Clock className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-yellow-300 font-medium">Votre abonnement expire bientôt</p>
+            <p className="text-yellow-400/80 text-sm mt-1">
+              Il vous reste <strong>{daysLeft} jour{daysLeft > 1 ? 's' : ''}</strong> d'accès (jusqu'au {formatDate(sub.current_period_end)}).
+              {!isManual && ' Renouvelez dès maintenant pour ne pas perdre l\'accès à vos livres.'}
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Status card */}
       <div className="card-dark rounded-2xl p-8 mb-8">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
               <h2 className="font-serif text-xl text-silver-200">
-                Plan {plan?.interval === 'month' ? 'Mensuel' : 'Annuel'}
+                {isManual ? 'Abonnement' : `Plan ${plan?.interval === 'month' ? 'Mensuel' : 'Annuel'}`}
               </h2>
               <SubscriptionBadge status={sub.status as any} />
             </div>
+
             {sub.current_period_end && (
-              <p className="text-silver-500 text-sm">
-                {sub.cancel_at_period_end
+              <p className={`text-sm mt-1 ${expiringSoon ? 'text-yellow-400 font-medium' : 'text-silver-500'}`}>
+                {expired
+                  ? `Expiré le ${formatDate(sub.current_period_end)}`
+                  : isManual || sub.cancel_at_period_end
                   ? `Accès jusqu'au ${formatDate(sub.current_period_end)}`
                   : `Prochain renouvellement le ${formatDate(sub.current_period_end)}`}
+                {expiringSoon && ` — ${daysLeft} jour${daysLeft > 1 ? 's' : ''} restant${daysLeft > 1 ? 's' : ''}`}
               </p>
             )}
+
             {plan && (
               <p className="text-gold-400 text-sm mt-1">
                 {(plan.price_cents / 100).toFixed(2)} $US/{plan.interval === 'month' ? 'mois' : 'an'}
               </p>
             )}
           </div>
-          <SubscriptionDashboardClient />
+
+          <SubscriptionDashboardClient
+            isManual={isManual}
+            cancelAtPeriodEnd={!!sub.cancel_at_period_end}
+          />
         </div>
       </div>
+
+      {/* Payment history */}
+      {payments && payments.length > 0 && (
+        <div className="card-dark rounded-2xl p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Receipt className="w-4 h-4 text-gold-400" />
+            <h2 className="font-serif text-lg text-silver-200">Historique des paiements</h2>
+          </div>
+          <div className="space-y-2">
+            {payments.map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between py-2 border-b border-ash/20 last:border-0">
+                <div>
+                  <p className="text-silver-300 text-sm">
+                    {p.status === 'external' ? 'Abonnement' : (p.book?.title || 'Achat')}
+                  </p>
+                  <p className="text-silver-500 text-xs mt-0.5">
+                    {formatDate(p.created_at)}
+                    {p.payment_method && ` · ${p.payment_method}`}
+                  </p>
+                </div>
+                <span className="text-gold-400 text-sm font-medium">{formatPrice(p.amount)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Included books */}
       <div>

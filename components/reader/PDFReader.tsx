@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import {
   ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2, BookOpen,
   Bookmark, BookmarkCheck, Maximize2, Minimize2, Download, Sun, Moon,
-  Coffee, Keyboard
+  Coffee, Keyboard, PanelRight, X, ChevronsLeft, ChevronsRight
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -28,6 +28,12 @@ const THEME_STYLES: Record<Theme, { bg: string; canvas: string; label: string }>
   light: { bg: 'bg-white/5', canvas: 'brightness(1.05) contrast(0.95)', label: 'Clair' },
 };
 
+interface BookmarkItem {
+  id: string;
+  page_number: number;
+  label: string | null;
+}
+
 export default function PDFReader({
   pdfUrl, userEmail, userId, bookId, bookTitle,
   canDownload = false, isSubscriptionAccess = false,
@@ -38,6 +44,7 @@ export default function PDFReader({
   const renderTaskRef = useRef<any>(null);
   const saveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const touchStartX = useRef<number>(0);
+  const pageInputRef = useRef<HTMLInputElement>(null);
 
   const [pdfDoc, setPdfDoc] = useState<any>(null);
   const [currentPage, setCurrentPage] = useState(initialPage);
@@ -47,10 +54,15 @@ export default function PDFReader({
   const [error, setError] = useState<string | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
   const [theme, setTheme] = useState<Theme>('dark');
-  const [bookmarks, setBookmarks] = useState<number[]>([]);
+  const [bookmarks, setBookmarks] = useState<BookmarkItem[]>([]);
   const [isCurrentPageBookmarked, setIsCurrentPageBookmarked] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [showBookmarksPanel, setShowBookmarksPanel] = useState(false);
+  const [pageInputMode, setPageInputMode] = useState(false);
+  const [pageInputValue, setPageInputValue] = useState('');
+
+  const progress = totalPages > 0 ? Math.round((currentPage / totalPages) * 100) : 0;
 
   const remainingMinutes = estimatedMinutes && totalPages > 0 && currentPage > 0
     ? Math.round((estimatedMinutes * (totalPages - currentPage)) / totalPages)
@@ -80,12 +92,12 @@ export default function PDFReader({
   useEffect(() => {
     fetch(`/api/reader/bookmarks?bookId=${bookId}`)
       .then(r => r.json())
-      .then(d => setBookmarks((d.bookmarks || []).map((b: any) => b.page_number)))
+      .then(d => setBookmarks(d.bookmarks || []))
       .catch(() => {});
   }, [bookId]);
 
   useEffect(() => {
-    setIsCurrentPageBookmarked(bookmarks.includes(currentPage));
+    setIsCurrentPageBookmarked(bookmarks.some(b => b.page_number === currentPage));
   }, [bookmarks, currentPage]);
 
   const drawWatermark = (ctx: CanvasRenderingContext2D, w: number, h: number) => {
@@ -142,12 +154,7 @@ export default function PDFReader({
     fetch('/api/reader/progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        bookId,
-        currentPage,
-        totalPages,
-        completed: currentPage >= totalPages,
-      }),
+      body: JSON.stringify({ bookId, currentPage, totalPages, completed: currentPage >= totalPages }),
     }).catch(() => {});
   }, [bookId, currentPage, totalPages]);
 
@@ -157,11 +164,14 @@ export default function PDFReader({
     return () => { if (saveTimerRef.current) clearInterval(saveTimerRef.current); };
   }, [saveProgress]);
 
-  // Save on unmount
   useEffect(() => () => { saveProgress(); }, []);
 
   const changePage = useCallback((delta: number) => {
     setCurrentPage(prev => Math.max(1, Math.min(totalPages, prev + delta)));
+  }, [totalPages]);
+
+  const goToPage = useCallback((page: number) => {
+    setCurrentPage(Math.max(1, Math.min(totalPages, page)));
   }, [totalPages]);
 
   const changeScale = (delta: number) => {
@@ -170,21 +180,19 @@ export default function PDFReader({
 
   const toggleBookmark = async () => {
     if (isCurrentPageBookmarked) {
-      // find and remove
-      const res = await fetch(`/api/reader/bookmarks?bookId=${bookId}`)
-        .then(r => r.json());
-      const bm = (res.bookmarks || []).find((b: any) => b.page_number === currentPage);
+      const bm = bookmarks.find(b => b.page_number === currentPage);
       if (bm) {
         await fetch(`/api/reader/bookmarks?id=${bm.id}`, { method: 'DELETE' });
-        setBookmarks(prev => prev.filter(p => p !== currentPage));
+        setBookmarks(prev => prev.filter(b => b.id !== bm.id));
       }
     } else {
-      await fetch('/api/reader/bookmarks', {
+      const res = await fetch('/api/reader/bookmarks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ bookId, pageNumber: currentPage }),
       });
-      setBookmarks(prev => [...prev, currentPage]);
+      const data = await res.json();
+      if (data.bookmark) setBookmarks(prev => [...prev, data.bookmark]);
     }
   };
 
@@ -210,33 +218,36 @@ export default function PDFReader({
     }
   };
 
+  const handlePageInputSubmit = () => {
+    const num = parseInt(pageInputValue);
+    if (!isNaN(num)) goToPage(num);
+    setPageInputMode(false);
+    setPageInputValue('');
+  };
+
   // Keyboard shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Block Ctrl+S, Ctrl+P, Ctrl+U
       if ((e.ctrlKey || e.metaKey) && ['s', 'p', 'u'].includes(e.key.toLowerCase())) {
         e.preventDefault();
         return;
       }
+      if (pageInputMode) return;
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        e.preventDefault();
-        changePage(e.key === 'ArrowLeft' ? -1 : 1);
-      } else if (e.key === 'f') {
-        toggleFullscreen();
-      } else if (e.key === 'b') {
-        toggleBookmark();
-      } else if (e.key === '+' || e.key === '=') {
-        changeScale(0.2);
-      } else if (e.key === '-') {
-        changeScale(-0.2);
-      }
+      if (e.key === 'ArrowLeft') { e.preventDefault(); changePage(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); changePage(1); }
+      else if (e.key === 'Home') { e.preventDefault(); goToPage(1); }
+      else if (e.key === 'End') { e.preventDefault(); goToPage(totalPages); }
+      else if (e.key === 'f') toggleFullscreen();
+      else if (e.key === 'b') toggleBookmark();
+      else if (e.key === '+' || e.key === '=') changeScale(0.2);
+      else if (e.key === '-') changeScale(-0.2);
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [changePage, currentPage, isCurrentPageBookmarked]);
+  }, [changePage, goToPage, currentPage, isCurrentPageBookmarked, totalPages, pageInputMode]);
 
   // Disable right-click
   useEffect(() => {
@@ -246,9 +257,7 @@ export default function PDFReader({
   }, []);
 
   // Touch swipe
-  const handleTouchStart = (e: React.TouchEvent) => {
-    touchStartX.current = e.touches[0].clientX;
-  };
+  const handleTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
   const handleTouchEnd = (e: React.TouchEvent) => {
     const dx = touchStartX.current - e.changedTouches[0].clientX;
     if (Math.abs(dx) > 50) changePage(dx > 0 ? 1 : -1);
@@ -259,9 +268,7 @@ export default function PDFReader({
       <div className="flex flex-col items-center justify-center h-96 gap-4 text-center">
         <BookOpen className="w-12 h-12 text-gold-700/50" />
         <p className="text-silver-400">{error}</p>
-        <button onClick={() => window.location.reload()} className="btn-ghost-gold px-4 py-2 rounded-lg text-sm">
-          Réessayer
-        </button>
+        <button onClick={() => window.location.reload()} className="btn-ghost-gold px-4 py-2 rounded-lg text-sm">Réessayer</button>
       </div>
     );
   }
@@ -274,10 +281,21 @@ export default function PDFReader({
       ref={containerRef}
       className={cn('flex flex-col h-full select-none', fullscreen ? 'fixed inset-0 z-[9999] bg-void' : '')}
     >
+      {/* Progress bar */}
+      <div className="h-0.5 bg-ash/30 w-full">
+        <div
+          className="h-full bg-gold-500 transition-all duration-300"
+          style={{ width: `${progress}%` }}
+        />
+      </div>
+
       {/* Toolbar */}
       <div className="flex items-center justify-between px-3 py-2 bg-obsidian border-b border-ash/50 sticky top-0 z-10 gap-2 flex-wrap">
-        {/* Left: zoom + bookmark */}
+        {/* Left: zoom + bookmark + bookmarks panel */}
         <div className="flex items-center gap-1">
+          <button onClick={() => changePage(-10)} disabled={currentPage <= 1} className="p-1.5 text-silver-500 hover:text-gold-400 disabled:opacity-30 rounded" title="Reculer de 10 pages">
+            <ChevronsLeft className="w-4 h-4" />
+          </button>
           <button onClick={() => changeScale(-0.2)} className="p-1.5 text-silver-400 hover:text-gold-400 rounded" title="Réduire (-)">
             <ZoomOut className="w-4 h-4" />
           </button>
@@ -286,8 +304,24 @@ export default function PDFReader({
             <ZoomIn className="w-4 h-4" />
           </button>
           <div className="w-px h-4 bg-ash/50 mx-1" />
-          <button onClick={toggleBookmark} className={cn('p-1.5 rounded transition-colors', isCurrentPageBookmarked ? 'text-gold-400' : 'text-silver-400 hover:text-gold-400')} title="Marque-page (B)">
+          <button
+            onClick={toggleBookmark}
+            className={cn('p-1.5 rounded transition-colors', isCurrentPageBookmarked ? 'text-gold-400' : 'text-silver-400 hover:text-gold-400')}
+            title="Marque-page (B)"
+          >
             {isCurrentPageBookmarked ? <BookmarkCheck className="w-4 h-4" /> : <Bookmark className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => setShowBookmarksPanel(s => !s)}
+            className={cn('p-1.5 rounded transition-colors relative', showBookmarksPanel ? 'text-gold-400' : 'text-silver-400 hover:text-gold-400')}
+            title="Mes marque-pages"
+          >
+            <PanelRight className="w-4 h-4" />
+            {bookmarks.length > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 bg-gold-500 text-void text-[9px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center">
+                {bookmarks.length}
+              </span>
+            )}
           </button>
         </div>
 
@@ -299,20 +333,48 @@ export default function PDFReader({
           )}
         </div>
 
-        {/* Right: nav + theme + fullscreen + download */}
+        {/* Right: nav + page jump + theme + fullscreen + download */}
         <div className="flex items-center gap-1">
           <button onClick={() => changePage(-1)} disabled={currentPage <= 1} className="p-1.5 text-silver-400 hover:text-gold-400 disabled:opacity-30 rounded" title="Page précédente (←)">
             <ChevronLeft className="w-4 h-4" />
           </button>
-          <span className="text-xs text-silver-400">
-            <span className="text-gold-400">{currentPage}</span>
-            <span className="text-mist">/{totalPages}</span>
-          </span>
+
+          {/* Page jump */}
+          {pageInputMode ? (
+            <input
+              ref={pageInputRef}
+              type="number"
+              value={pageInputValue}
+              onChange={e => setPageInputValue(e.target.value)}
+              onBlur={handlePageInputSubmit}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handlePageInputSubmit();
+                if (e.key === 'Escape') { setPageInputMode(false); setPageInputValue(''); }
+              }}
+              className="w-16 text-center text-xs bg-charcoal border border-gold-500/50 rounded px-1 py-0.5 text-gold-400 focus:outline-none"
+              min={1}
+              max={totalPages}
+              autoFocus
+              placeholder={`1-${totalPages}`}
+            />
+          ) : (
+            <button
+              onClick={() => { setPageInputMode(true); setPageInputValue(String(currentPage)); }}
+              className="text-xs text-silver-400 hover:text-gold-400 transition-colors px-1 rounded"
+              title="Cliquer pour aller à une page"
+            >
+              <span className="text-gold-400">{currentPage}</span>
+              <span className="text-mist">/{totalPages}</span>
+            </button>
+          )}
+
           <button onClick={() => changePage(1)} disabled={currentPage >= totalPages} className="p-1.5 text-silver-400 hover:text-gold-400 disabled:opacity-30 rounded" title="Page suivante (→)">
             <ChevronRight className="w-4 h-4" />
           </button>
+          <button onClick={() => changePage(10)} disabled={currentPage >= totalPages} className="p-1.5 text-silver-500 hover:text-gold-400 disabled:opacity-30 rounded" title="Avancer de 10 pages">
+            <ChevronsRight className="w-4 h-4" />
+          </button>
           <div className="w-px h-4 bg-ash/50 mx-1" />
-          {/* Theme cycle */}
           {(() => {
             const nextTheme = themeOrder[(themeOrder.indexOf(theme) + 1) % themeOrder.length];
             const Icon = ThemeIcons[theme];
@@ -338,9 +400,15 @@ export default function PDFReader({
 
       {/* Keyboard shortcuts panel */}
       {showShortcuts && (
-        <div className="absolute top-14 right-4 z-50 card-dark rounded-xl p-4 text-xs text-silver-400 space-y-1 shadow-xl border border-ash/50 w-52">
+        <div className="absolute top-14 right-4 z-50 card-dark rounded-xl p-4 text-xs text-silver-400 space-y-1 shadow-xl border border-ash/50 w-56">
           <p className="text-gold-400 font-medium mb-2">Raccourcis clavier</p>
-          {[['← →', 'Page précédente/suivante'], ['+ / -', 'Zoom'], ['F', 'Plein écran'], ['B', 'Marque-page']].map(([k, v]) => (
+          {[
+            ['← →', 'Page précédente/suivante'],
+            ['⇤ ⇥', 'Début / Fin du livre'],
+            ['+ / -', 'Zoom'],
+            ['F', 'Plein écran'],
+            ['B', 'Marque-page'],
+          ].map(([k, v]) => (
             <div key={k} className="flex justify-between gap-4">
               <kbd className="bg-charcoal px-1.5 py-0.5 rounded text-gold-400">{k}</kbd>
               <span>{v}</span>
@@ -349,29 +417,81 @@ export default function PDFReader({
         </div>
       )}
 
-      {/* Canvas */}
-      <div
-        className={cn('flex-1 overflow-auto flex items-start justify-center p-4 md:p-8', THEME_STYLES[theme].bg)}
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        {loading ? (
-          <div className="flex flex-col items-center justify-center h-96 gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-gold-500" />
-            <p className="text-silver-500 text-sm">Chargement du livre…</p>
-          </div>
-        ) : (
-          <div className="relative shadow-2xl">
-            <canvas
-              ref={canvasRef}
-              className="block max-w-full"
-              style={{
-                pointerEvents: 'none',
-                filter: THEME_STYLES[theme].canvas || undefined,
-              }}
-            />
+      {/* Main area: canvas + bookmarks panel */}
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Canvas */}
+        <div
+          className={cn('flex-1 overflow-auto flex items-start justify-center p-4 md:p-8', THEME_STYLES[theme].bg)}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          {loading ? (
+            <div className="flex flex-col items-center justify-center h-96 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-gold-500" />
+              <p className="text-silver-500 text-sm">Chargement du livre…</p>
+            </div>
+          ) : (
+            <div className="relative shadow-2xl">
+              <canvas
+                ref={canvasRef}
+                className="block max-w-full"
+                style={{ pointerEvents: 'none', filter: THEME_STYLES[theme].canvas || undefined }}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Bookmarks panel */}
+        {showBookmarksPanel && (
+          <div className="w-64 bg-obsidian border-l border-ash/50 flex flex-col shrink-0">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-ash/30">
+              <span className="font-serif text-sm text-gold-300">Marque-pages</span>
+              <button onClick={() => setShowBookmarksPanel(false)} className="text-silver-500 hover:text-silver-300 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3 space-y-2">
+              {bookmarks.length === 0 ? (
+                <div className="text-center py-8">
+                  <Bookmark className="w-8 h-8 text-silver-700 mx-auto mb-2" />
+                  <p className="text-silver-500 text-xs">Aucun marque-page.<br />Appuyez sur B pour en ajouter.</p>
+                </div>
+              ) : (
+                bookmarks
+                  .slice()
+                  .sort((a, b) => a.page_number - b.page_number)
+                  .map(bm => (
+                    <button
+                      key={bm.id}
+                      onClick={() => { goToPage(bm.page_number); setShowBookmarksPanel(false); }}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-charcoal/50 hover:bg-charcoal border border-ash/20 hover:border-gold-500/30 transition-all text-left group"
+                    >
+                      <BookmarkCheck className="w-4 h-4 text-gold-500 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-silver-300 text-xs font-medium">Page {bm.page_number}</p>
+                        {bm.label && <p className="text-silver-500 text-xs truncate">{bm.label}</p>}
+                      </div>
+                      <span className="text-silver-600 text-xs group-hover:text-gold-400 transition-colors">→</span>
+                    </button>
+                  ))
+              )}
+            </div>
+            {bookmarks.length > 0 && (
+              <div className="px-4 py-3 border-t border-ash/30">
+                <p className="text-silver-600 text-xs text-center">{bookmarks.length} marque-page{bookmarks.length > 1 ? 's' : ''}</p>
+              </div>
+            )}
           </div>
         )}
+      </div>
+
+      {/* Progress bar footer */}
+      <div className="hidden sm:flex items-center justify-between px-4 py-1.5 bg-obsidian border-t border-ash/30 text-xs text-silver-600">
+        <span>{progress}% lu</span>
+        <div className="flex-1 mx-4 h-1 bg-ash/30 rounded-full overflow-hidden">
+          <div className="h-full bg-gold-600/60 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+        </div>
+        <span>Page {currentPage} / {totalPages}</span>
       </div>
 
       {/* Mobile bottom nav */}
@@ -379,9 +499,12 @@ export default function PDFReader({
         <button onClick={() => changePage(-1)} disabled={currentPage <= 1} className="p-2 text-silver-400 hover:text-gold-400 disabled:opacity-30">
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <span className="text-silver-400 text-sm">
+        <button
+          onClick={() => { setPageInputMode(true); setPageInputValue(String(currentPage)); }}
+          className="text-silver-400 text-sm"
+        >
           <span className="text-gold-400">{currentPage}</span> / {totalPages}
-        </span>
+        </button>
         <button onClick={() => changePage(1)} disabled={currentPage >= totalPages} className="p-2 text-silver-400 hover:text-gold-400 disabled:opacity-30">
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -389,4 +512,3 @@ export default function PDFReader({
     </div>
   );
 }
-
