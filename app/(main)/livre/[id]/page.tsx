@@ -15,6 +15,7 @@ import BookCard from '@/components/books/BookCard';
 import { getCoPurchasedBooks, getSimilarBooks } from '@/lib/recommendations';
 import ReviewForm from './ReviewForm';
 import DownloadButton from './DownloadButton';
+import ViewerCounter from '@/components/books/ViewerCounter';
 import { formatPrice, formatDate } from '@/lib/utils';
 import { BookOpen, Calendar, FileText, Globe, Tag, Clock, Download, Crown, Lock } from 'lucide-react';
 import { Book } from '@/lib/types';
@@ -183,6 +184,7 @@ export default async function LivrePage({ params }: Props) {
                 </Link>
               ) : (
                 <div className="space-y-2">
+                  <ViewerCounter bookId={book.id} />
                   {book.access_type !== 'subscription_only' && (
                     <PurchaseButton bookId={book.id} price={book.price} owned={false} />
                   )}
