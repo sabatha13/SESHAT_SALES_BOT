@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Shield, Zap, Star, Package } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Star, Package, Compass } from 'lucide-react';
 import PromotionDisplay from '@/components/promotion/PromotionDisplay';
 import CitationBand from '@/components/home/CitationBand';
 import BookCard from '@/components/books/BookCard';
@@ -236,7 +236,36 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* Quiz Chemin Initiatique */}
       <section className="py-20 px-4 bg-obsidian">
+        <div className="max-w-4xl mx-auto">
+          <div className="relative card-dark rounded-3xl overflow-hidden p-10 md:p-14 text-center shadow-[0_0_60px_rgba(201,168,76,0.12)] border border-gold-500/20">
+            <span className="absolute top-6 left-8 text-gold-600/15 text-4xl select-none animate-pulse pointer-events-none" style={{ animationDuration: '4s' }}>✦</span>
+            <span className="absolute bottom-6 right-10 text-gold-600/15 text-4xl select-none animate-pulse pointer-events-none" style={{ animationDuration: '5s', animationDelay: '1s' }}>✧</span>
+            <span className="absolute top-10 right-12 text-gold-600/10 text-5xl select-none animate-pulse pointer-events-none" style={{ animationDuration: '6s' }}>⊕</span>
+
+            <div className="relative z-10">
+              <div className="w-14 h-14 rounded-2xl bg-gold-500/10 flex items-center justify-center mx-auto mb-6 border border-gold-500/30">
+                <Compass className="w-6 h-6 text-gold-500" />
+              </div>
+              <p className="text-gold-600 uppercase tracking-[0.3em] text-xs mb-3">Quiz Initiatique</p>
+              <h2 className="font-serif text-3xl md:text-5xl text-gold-400 font-light mb-4 leading-tight">
+                Quelle est votre voie ?
+              </h2>
+              <p className="text-silver-400 text-base md:text-lg leading-relaxed max-w-xl mx-auto mb-8">
+                Magie, Kabbale, Alchimie, Chamanisme… Laissez votre intuition parler à travers quelques
+                questions, et découvrez l&apos;art occulte qui résonne en vous.
+              </p>
+              <Link href="/chemin" className="btn-gold px-8 py-4 rounded-xl text-base font-medium inline-flex items-center gap-2 group">
+                Trouver ma voie
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-20 px-4 bg-void">
         <div className="max-w-3xl mx-auto text-center">
           <p className="ornament text-3xl mb-6">✦</p>
           <h2 className="font-serif text-4xl md:text-5xl text-silver-200 font-light mb-4">

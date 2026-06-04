@@ -11,6 +11,7 @@ import TrustBadge from '@/components/books/TrustBadge';
 import WishlistButton from '@/components/books/WishlistButton';
 import StarRating from '@/components/ui/StarRating';
 import BookCard from '@/components/books/BookCard';
+import { getCoPurchasedBooks, getSimilarBooks } from '@/lib/recommendations';
 import ReviewForm from './ReviewForm';
 import DownloadButton from './DownloadButton';
 import { formatPrice, formatDate } from '@/lib/utils';
@@ -30,18 +31,6 @@ async function getBook(id: string) {
     .eq('is_published', true)
     .single();
   return data;
-}
-
-async function getRelatedBooks(category: string, excludeId: string): Promise<Book[]> {
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from('books')
-    .select('*')
-    .eq('category', category)
-    .eq('is_published', true)
-    .neq('id', excludeId)
-    .limit(4);
-  return (data as Book[]) || [];
 }
 
 async function getReviews(bookId: string) {
@@ -85,11 +74,16 @@ export default async function LivrePage({ params }: Props) {
   if (!book) notFound();
 
   const { userId } = await auth();
-  const [userData, reviews, relatedBooks] = await Promise.all([
+  const [userData, reviews, coPurchasedBooks] = await Promise.all([
     userId ? getUserData(userId, book.id) : Promise.resolve({ owned: false, hasSubscription: false, inWishlist: false }),
     getReviews(book.id),
-    getRelatedBooks(book.category, book.id),
+    getCoPurchasedBooks(book.id, 4),
   ]);
+
+  // Only treat co-purchase as a real signal when there are at least 2 results.
+  const coPurchased = coPurchasedBooks.length >= 2 ? coPurchasedBooks : [];
+  // De-dupe: similar books exclude anything already shown in the co-purchase section.
+  const similarBooks = await getSimilarBooks(book, coPurchased.map(b => b.id), 4);
 
   const { owned, hasSubscription, inWishlist } = userData;
   const canReadViaSubscription = hasSubscription && (book.subscription_included || book.access_type === 'subscription_only' || book.access_type === 'purchase_and_subscription');
@@ -318,13 +312,26 @@ export default async function LivrePage({ params }: Props) {
         </div>
       </div>
 
-      {/* Related books */}
-      {relatedBooks.length > 0 && (
+      {/* Co-purchase recommendations */}
+      {coPurchased.length > 0 && (
         <div className="mt-16">
           <div className="divider-gold mb-8" />
-          <h2 className="font-serif text-2xl text-silver-200 mb-6">Dans la même catégorie</h2>
+          <h2 className="font-serif text-2xl text-silver-200 mb-6">Lecteurs ont aussi exploré</h2>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-            {relatedBooks.map(rb => (
+            {coPurchased.map(rb => (
+              <BookCard key={rb.id} book={rb} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Similarity recommendations */}
+      {similarBooks.length > 0 && (
+        <div className="mt-16">
+          <div className="divider-gold mb-8" />
+          <h2 className="font-serif text-2xl text-silver-200 mb-6">Dans le même courant</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
+            {similarBooks.map(rb => (
               <BookCard key={rb.id} book={rb} />
             ))}
           </div>

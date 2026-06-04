@@ -50,6 +50,9 @@ export default function Navbar() {
             <Link href="/packs" className={cn('nav-link text-sm tracking-wide', pathname === '/packs' && 'text-gold-400')}>
               Packs
             </Link>
+            <Link href="/chemin" className={cn('nav-link text-sm tracking-wide', pathname === '/chemin' && 'text-gold-400')}>
+              Trouvez votre voie
+            </Link>
             <Link href="/abonnement" className={cn('nav-link text-sm tracking-wide', pathname === '/abonnement' && 'text-gold-400')}>
               Abonnement
             </Link>
@@ -125,6 +128,9 @@ export default function Navbar() {
             </Link>
             <Link href="/packs" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Packs
+            </Link>
+            <Link href="/chemin" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
+              Trouvez votre voie
             </Link>
             <Link href="/abonnement" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Abonnement
