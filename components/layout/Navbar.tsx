@@ -47,6 +47,9 @@ export default function Navbar() {
             <Link href="/boutique" className={cn('nav-link text-sm tracking-wide', pathname === '/boutique' && 'text-gold-400')}>
               Boutique
             </Link>
+            <Link href="/packs" className={cn('nav-link text-sm tracking-wide', pathname === '/packs' && 'text-gold-400')}>
+              Packs
+            </Link>
             <Link href="/abonnement" className={cn('nav-link text-sm tracking-wide', pathname === '/abonnement' && 'text-gold-400')}>
               Abonnement
             </Link>
@@ -119,6 +122,9 @@ export default function Navbar() {
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
             <Link href="/boutique" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Boutique
+            </Link>
+            <Link href="/packs" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
+              Packs
             </Link>
             <Link href="/abonnement" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Abonnement
