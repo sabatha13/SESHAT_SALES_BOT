@@ -1,12 +1,35 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { vceSignup } from '../actions/auth';
 
 const initialState = { error: undefined as string | undefined };
 
+function InscriptionSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{
+        padding: '0.75rem',
+        background: 'var(--or, #B5A020)',
+        color: '#fff',
+        border: 'none',
+        borderRadius: '0.5rem',
+        fontWeight: 600,
+        fontSize: '1rem',
+        cursor: pending ? 'not-allowed' : 'pointer',
+        fontFamily: 'var(--font-inter, sans-serif)',
+      }}
+    >
+      {pending ? 'Création du compte…' : 'Créer mon compte auteur'}
+    </button>
+  );
+}
+
 export default function VCEInscriptionPage() {
-  const [state, formAction, isPending] = useActionState(
+  const [state, formAction] = useFormState(
     async (_prev: typeof initialState, formData: FormData) => {
       return (await vceSignup(formData)) ?? initialState;
     },
@@ -57,9 +80,7 @@ export default function VCEInscriptionPage() {
 
           {state?.error && <p style={styles.error}>{state.error}</p>}
 
-          <button type="submit" disabled={isPending} style={styles.button}>
-            {isPending ? 'Création du compte…' : 'Créer mon compte auteur'}
-          </button>
+          <InscriptionSubmitButton />
         </form>
 
         <p style={styles.footer}>
