@@ -103,8 +103,9 @@ export async function vceSignup(formData: FormData): Promise<{ error?: string }>
     return { error: 'Tous les champs obligatoires doivent être renseignés.' };
   }
 
-  if (password.length < 8) {
-    return { error: 'Le mot de passe doit contenir au moins 8 caractères.' };
+  const strongPassword = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+  if (!strongPassword.test(password)) {
+    return { error: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule et un chiffre.' };
   }
 
   // Créer le compte auth Supabase
