@@ -143,15 +143,11 @@ export async function soumettreManuScrit(
       });
 
     if (!uploadError && uploadData) {
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('vce-manuscripts').getPublicUrl(uploadData.path);
-
       await supabase.from('vce_fichiers').insert({
         commande_id: commande.id,
         auteur_id: auteurId,
         nom_fichier: fichier.name,
-        url: publicUrl,
+        url: uploadData.path,
         taille_bytes: fichier.size,
         type_fichier: 'manuscrit',
         envoye_par: 'auteur',
