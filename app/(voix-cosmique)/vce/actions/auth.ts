@@ -112,6 +112,7 @@ export async function vceSignup(formData: FormData): Promise<{ error?: string }>
   const data = await supabaseAuthFetch('/signup', { email, password });
 
   if (data.error || !data.user?.id) {
+    console.error('[vceSignup] Echec Supabase Auth signup:', JSON.stringify(data));
     return { error: data.error_description ?? 'Erreur lors de la création du compte.' };
   }
 
@@ -119,6 +120,7 @@ export async function vceSignup(formData: FormData): Promise<{ error?: string }>
   try {
     await createAuteurProfile(data.user.id, { prenom, nom, email, nom_plume });
   } catch (err) {
+    console.error('[vceSignup] Erreur création profil auteur:', err);
     // Supprimer l'utilisateur auth créé pour éviter les fantômes
     await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${data.user.id}`, {
       method: 'DELETE',
