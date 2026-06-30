@@ -12,17 +12,24 @@ function isVCERequest(req: NextRequest): boolean {
   return host === VCE_HOST || host.startsWith(VCE_HOST + ':');
 }
 
-function handleVCERequest(req: NextRequest): NextResponse {
+async function handleVCERequest(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
 
-  // Protect /espace-auteur/* — require VCE auth session cookie
+  // Protect /espace-auteur/* — validate Supabase JWT, not just cookie presence
   if (pathname.startsWith('/espace-auteur')) {
-    const session = req.cookies.get('vce_auth_session');
-    if (!session?.value) {
-      const loginUrl = new URL('/connexion', req.url);
-      loginUrl.searchParams.set('from', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
+    const token = req.cookies.get('vce_auth_session')?.value;
+    const loginUrl = new URL('/connexion', req.url);
+    loginUrl.searchParams.set('from', pathname);
+
+    if (!token) return NextResponse.redirect(loginUrl);
+
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { auth: { persistSession: false } }
+    );
+    const { error } = await supabase.auth.getUser(token);
+    if (error) return NextResponse.redirect(loginUrl);
   }
 
   // Rewrite VCE host paths to internal /vce/* prefix (keeps URL unchanged for user)
@@ -45,7 +52,7 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   // VCE subdomain — bypass Clerk, use Supabase session
   if (isVCERequest(req as NextRequest)) {
-    return handleVCERequest(req as NextRequest);
+    return await handleVCERequest(req as NextRequest);
   }
 
   // CDS — Clerk auth guard
