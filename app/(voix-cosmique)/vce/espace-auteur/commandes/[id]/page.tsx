@@ -91,6 +91,18 @@ export default async function CommandeDetailPage({
   const etapes = (etapesData ?? []) as EtapeData[];
   const fichiers = (fichiersData ?? []) as Fichier[];
 
+  // Signed URLs pour les téléchargements (bucket privé, expiry 1h)
+  const fichierPaths = fichiers.map((f) => f.url).filter(Boolean);
+  const signedUrlMap = new Map<string, string>();
+  if (fichierPaths.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from('vce-manuscripts')
+      .createSignedUrls(fichierPaths, 3600);
+    for (const item of signed ?? []) {
+      if (item.signedUrl) signedUrlMap.set(item.path, item.signedUrl);
+    }
+  }
+
   // Données initiales passées au composant Realtime
   const commandeInitiale: CommandeData = {
     id: commande.id,
@@ -428,15 +440,16 @@ export default async function CommandeDetailPage({
                           </span>
                         )}
                         <a
-                          href={f.url}
+                          href={signedUrlMap.get(f.url) ?? undefined}
                           target="_blank"
                           rel="noopener noreferrer"
                           style={{
                             fontFamily: 'var(--font-inter)',
                             fontSize: '0.75rem',
-                            color: '#8A7818',
+                            color: signedUrlMap.has(f.url) ? '#8A7818' : '#C4B08A',
                             textDecoration: 'none',
                             fontWeight: 500,
+                            pointerEvents: signedUrlMap.has(f.url) ? 'auto' : 'none',
                           }}
                         >
                           Télécharger
