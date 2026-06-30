@@ -84,8 +84,9 @@ export async function vceLogin(formData: FormData): Promise<{ error?: string }> 
 
   const data = await supabaseAuthFetch('/token?grant_type=password', { email, password });
 
-  if (data.error || !data.access_token) {
-    return { error: data.error_description ?? 'Identifiants incorrects.' };
+  if (data.error || data.error_code || !data.access_token) {
+    console.error('[vceLogin] Echec Supabase Auth:', JSON.stringify(data));
+    return { error: data.error_description ?? data.msg ?? 'Identifiants incorrects.' };
   }
 
   setSessionCookies(data.access_token, data.refresh_token);
