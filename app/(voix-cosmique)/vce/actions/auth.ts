@@ -27,11 +27,9 @@ async function supabaseAuthFetch(path: string, body: unknown, useServiceKey = fa
 
 function setSessionCookies(accessToken: string, refreshToken: string) {
   const cookieStore = cookies();
-  const isProduction = process.env.NODE_ENV === 'production';
-
   cookieStore.set(SESSION_COOKIE, accessToken, {
     httpOnly: true,
-    secure: isProduction,
+    secure: true,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60, // 1 heure
@@ -39,7 +37,7 @@ function setSessionCookies(accessToken: string, refreshToken: string) {
 
   cookieStore.set(REFRESH_COOKIE, refreshToken, {
     httpOnly: true,
-    secure: isProduction,
+    secure: true,
     sameSite: 'lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 30, // 30 jours
