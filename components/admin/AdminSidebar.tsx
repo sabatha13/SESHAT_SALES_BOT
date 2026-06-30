@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus, Crown, Download, Tag, Star, Feather, Megaphone, Package } from 'lucide-react';
+import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus, Crown, Download, Tag, Star, Feather, Megaphone, Package, FileText, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const nav = [
@@ -18,6 +18,14 @@ const nav = [
   { href: '/admin/coupons', label: 'Coupons', icon: Tag },
   { href: '/admin/avis', label: 'Avis', icon: Star },
   { href: '/admin/promotion', label: 'Promotion', icon: Megaphone },
+];
+
+const vceNav = [
+  { href: '/admin/vce', label: 'Tableau VCE', icon: Sparkles, exact: true },
+  { href: '/admin/vce/auteurs', label: 'Auteurs', icon: Feather },
+  { href: '/admin/vce/manuscrits', label: 'Manuscrits', icon: FileText },
+  { href: '/admin/vce/livres', label: 'Livres VCE', icon: BookMarked },
+  { href: '/admin/vce/commandes', label: 'Commandes', icon: ShoppingBag },
 ];
 
 export default function AdminSidebar() {
@@ -38,8 +46,8 @@ export default function AdminSidebar() {
         </Link>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 p-4 space-y-1">
+      {/* Nav CDS */}
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {nav.map(item => {
           const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return (
@@ -54,6 +62,36 @@ export default function AdminSidebar() {
               )}
             >
               <item.icon className={cn('w-4 h-4', active ? 'text-gold-400' : 'text-mist')} />
+              {item.label}
+            </Link>
+          );
+        })}
+
+        {/* Séparateur VCE */}
+        <div className="pt-4 pb-1">
+          <div className="px-4 mb-1 flex items-center gap-2">
+            <div className="flex-1 h-px bg-ash/40" />
+            <span className="text-[9px] uppercase tracking-widest text-silver-600 font-medium whitespace-nowrap">
+              Voix Cosmique Éd.
+            </span>
+            <div className="flex-1 h-px bg-ash/40" />
+          </div>
+        </div>
+
+        {vceNav.map(item => {
+          const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200',
+                active
+                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                  : 'text-silver-500 hover:text-silver-300 hover:bg-charcoal'
+              )}
+            >
+              <item.icon className={cn('w-4 h-4', active ? 'text-amber-400' : 'text-mist')} />
               {item.label}
             </Link>
           );
