@@ -3,12 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
-
-async function assertAdmin(clerkUserId: string) {
-  const supabase = createServerClient();
-  const { data } = await supabase.from('profiles').select('is_admin').eq('clerk_user_id', clerkUserId).single();
-  if (!data?.is_admin) throw new Error('Accès refusé');
-}
+import { assertAdmin } from '@/lib/admin';
 
 export async function POST(req: NextRequest) {
   try {
