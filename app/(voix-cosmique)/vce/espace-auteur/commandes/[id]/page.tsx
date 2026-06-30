@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase/server';
 import { getVceAuteur } from '@/lib/vce/session';
@@ -59,6 +60,7 @@ export default async function CommandeDetailPage({
   params: { id: string };
 }) {
   const auteur = await getVceAuteur();
+  const token = cookies().get('vce_auth_session')?.value ?? '';
   const supabase = createServerClient();
 
   // Vérification propriété incluse dans la requête (.eq auteur_id) — 404 si l'ID ne correspond pas
@@ -323,6 +325,7 @@ export default async function CommandeDetailPage({
                 commandeId={commande.id}
                 commandeInitiale={commandeInitiale}
                 etapesInitiales={etapes}
+                token={token}
               />
             </div>
 

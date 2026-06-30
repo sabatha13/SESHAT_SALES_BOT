@@ -62,10 +62,14 @@ export default function CommandeRealtime({
   commandeId,
   commandeInitiale,
   etapesInitiales,
+  token,
 }: {
   commandeId: string;
   commandeInitiale: CommandeData;
   etapesInitiales: EtapeData[];
+  // Le JWT est exposé au JS client volontairement pour permettre l'auth Realtime
+  // — accepté car durée de vie 1h et app à accès restreint. Voir audit sécurité 30 juin 2026.
+  token: string;
 }) {
   const [commande, setCommande] = useState<CommandeData>(commandeInitiale);
   const [etapes, setEtapes] = useState<EtapeData[]>(etapesInitiales);
@@ -75,6 +79,7 @@ export default function CommandeRealtime({
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } } },
     );
 
     const channel = supabase
@@ -146,7 +151,7 @@ export default function CommandeRealtime({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [commandeId]);
+  }, [commandeId, token]);
 
   const couleurs = STATUT_COLORS[commande.statut] ?? { bg: '#F3F4F6', text: '#374151' };
 
