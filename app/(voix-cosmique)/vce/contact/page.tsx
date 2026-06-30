@@ -1,11 +1,36 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { envoyerContact, type ContactState } from '../actions/contact';
 import VCENav from '../_components/VCENav';
 
 const initialState: ContactState = {};
+
+function ContactSubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{
+        width: '100%',
+        padding: '0.9rem',
+        background: pending ? '#C4B080' : '#B5A020',
+        color: '#FAF3E0',
+        border: 'none',
+        borderRadius: '4px',
+        fontFamily: 'var(--font-inter)',
+        fontSize: '0.95rem',
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        cursor: pending ? 'not-allowed' : 'pointer',
+      }}
+    >
+      {pending ? 'Envoi…' : 'Envoyer le message'}
+    </button>
+  );
+}
 
 const label: React.CSSProperties = {
   display: 'block',
@@ -30,7 +55,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export default function ContactPage() {
-  const [state, action, pending] = useActionState(envoyerContact, initialState);
+  const [state, action] = useFormState(envoyerContact, initialState);
 
   return (
     <>
@@ -314,25 +339,7 @@ export default function ContactPage() {
                   />
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={pending}
-                  style={{
-                    width: '100%',
-                    padding: '0.9rem',
-                    background: pending ? '#C4B080' : '#B5A020',
-                    color: '#FAF3E0',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontFamily: 'var(--font-inter)',
-                    fontSize: '0.95rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.04em',
-                    cursor: pending ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {pending ? 'Envoi…' : 'Envoyer le message'}
-                </button>
+                <ContactSubmitButton />
               </form>
             )}
           </div>

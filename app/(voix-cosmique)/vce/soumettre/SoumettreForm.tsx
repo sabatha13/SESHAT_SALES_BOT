@@ -1,6 +1,7 @@
 'use client';
 
-import { useActionState, useRef } from 'react';
+import { useRef } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { soumettreManuScrit, type SoumettreManuScritState } from '../actions/soumettre';
 
 interface Service {
@@ -50,6 +51,31 @@ const SOURCES = [
 
 const initialState: SoumettreManuScritState = {};
 
+function SubmitButton() {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{
+        width: '100%',
+        padding: '1rem',
+        background: pending ? '#C4B080' : '#B5A020',
+        color: '#FAF3E0',
+        border: 'none',
+        borderRadius: '4px',
+        fontFamily: 'var(--font-inter)',
+        fontSize: '1rem',
+        fontWeight: 600,
+        letterSpacing: '0.04em',
+        cursor: pending ? 'not-allowed' : 'pointer',
+      }}
+    >
+      {pending ? 'Envoi en cours…' : 'Soumettre mon manuscrit'}
+    </button>
+  );
+}
+
 const label = (style?: React.CSSProperties): React.CSSProperties => ({
   display: 'block',
   fontFamily: 'var(--font-inter)',
@@ -80,7 +106,7 @@ export default function SoumettreForm({
   preselectedService,
   preselectedPackage,
 }: Props) {
-  const [state, action, pending] = useActionState(soumettreManuScrit, initialState);
+  const [state, action] = useFormState(soumettreManuScrit, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
   return (
@@ -488,25 +514,7 @@ export default function SoumettreForm({
         uniquement si vous confirmez la commande.
       </p>
 
-      <button
-        type="submit"
-        disabled={pending}
-        style={{
-          width: '100%',
-          padding: '1rem',
-          background: pending ? '#C4B080' : '#B5A020',
-          color: '#FAF3E0',
-          border: 'none',
-          borderRadius: '4px',
-          fontFamily: 'var(--font-inter)',
-          fontSize: '1rem',
-          fontWeight: 600,
-          letterSpacing: '0.04em',
-          cursor: pending ? 'not-allowed' : 'pointer',
-        }}
-      >
-        {pending ? 'Envoi en cours…' : 'Soumettre mon manuscrit'}
-      </button>
+      <SubmitButton />
     </form>
   );
 }
