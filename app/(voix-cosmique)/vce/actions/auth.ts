@@ -111,18 +111,18 @@ export async function vceSignup(formData: FormData): Promise<{ error?: string }>
   // Créer le compte auth Supabase
   const data = await supabaseAuthFetch('/signup', { email, password });
 
-  if (data.error || !data.user?.id) {
+  if (data.error || !data.id) {
     console.error('[vceSignup] Echec Supabase Auth signup:', JSON.stringify(data));
     return { error: data.error_description ?? 'Erreur lors de la création du compte.' };
   }
 
   // Créer le profil vce_auteurs via service_role
   try {
-    await createAuteurProfile(data.user.id, { prenom, nom, email, nom_plume });
+    await createAuteurProfile(data.id, { prenom, nom, email, nom_plume });
   } catch (err) {
     console.error('[vceSignup] Erreur création profil auteur:', err);
     // Supprimer l'utilisateur auth créé pour éviter les fantômes
-    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${data.user.id}`, {
+    await fetch(`${SUPABASE_URL}/auth/v1/admin/users/${data.id}`, {
       method: 'DELETE',
       headers: {
         apikey: SUPABASE_SERVICE_KEY,
@@ -133,8 +133,8 @@ export async function vceSignup(formData: FormData): Promise<{ error?: string }>
   }
 
   // Si confirmation email désactivée, on a directement une session
-  if (data.session?.access_token) {
-    setSessionCookies(data.session.access_token, data.session.refresh_token);
+  if (data.access_token) {
+    setSessionCookies(data.access_token, data.refresh_token);
     redirect('/espace-auteur');
   }
 
