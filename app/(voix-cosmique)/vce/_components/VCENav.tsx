@@ -37,6 +37,9 @@ export default function VCENav() {
         <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
           {[
             { href: '/services', label: 'Services' },
+            { href: '/catalogue', label: 'Catalogue' },
+            { href: '/auteurs', label: 'Auteurs' },
+            { href: '/a-propos', label: 'À propos' },
             { href: '/soumettre', label: 'Soumettre' },
             { href: '/contact', label: 'Contact' },
           ].map((link) => (

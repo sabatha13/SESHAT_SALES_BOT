@@ -1071,6 +1071,34 @@ export default async function VCELandingPage() {
             </Link>
           ))}
         </div>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '1.5rem',
+            marginBottom: '1.5rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          {[
+            { href: '/mentions-legales', label: 'Mentions légales' },
+            { href: '/confidentialite', label: 'Confidentialité' },
+            { href: '/cgv', label: 'CGV' },
+          ].map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              style={{
+                fontFamily: 'var(--font-inter)',
+                fontSize: '0.75rem',
+                color: '#6B4C2F',
+                textDecoration: 'none',
+              }}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
         <p
           style={{
             fontFamily: 'var(--font-inter)',
