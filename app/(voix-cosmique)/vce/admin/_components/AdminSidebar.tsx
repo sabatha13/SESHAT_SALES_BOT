@@ -4,22 +4,22 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 const NAV_ITEMS = [
-  { href: '/vce/admin', label: 'Tableau de bord' },
-  { href: '/vce/admin/commandes', label: 'Commandes' },
-  { href: '/vce/admin/auteurs', label: 'Auteurs' },
-  { href: '/vce/admin/messagerie', label: 'Messagerie' },
-  { href: '/vce/admin/fichiers', label: 'Fichiers' },
-  { href: '/vce/admin/paiements', label: 'Paiements' },
-  { href: '/vce/admin/services', label: 'Services & Tarifs' },
-  { href: '/vce/admin/avis', label: 'Avis' },
-  { href: '/vce/admin/notifications', label: 'Notifications' },
+  { href: '/admin', label: 'Tableau de bord' },
+  { href: '/admin/commandes', label: 'Commandes' },
+  { href: '/admin/auteurs', label: 'Auteurs' },
+  { href: '/admin/messagerie', label: 'Messagerie' },
+  { href: '/admin/fichiers', label: 'Fichiers' },
+  { href: '/admin/paiements', label: 'Paiements' },
+  { href: '/admin/services', label: 'Services & Tarifs' },
+  { href: '/admin/avis', label: 'Avis' },
+  { href: '/admin/notifications', label: 'Notifications' },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
 
   function isActive(href: string): boolean {
-    if (href === '/vce/admin') return pathname === '/vce/admin';
+    if (href === '/admin') return pathname === '/admin';
     return pathname === href || pathname.startsWith(href + '/');
   }
 
