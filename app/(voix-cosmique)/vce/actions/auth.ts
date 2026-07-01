@@ -1,6 +1,7 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
+import { createServerClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -82,10 +83,30 @@ export async function vceLogin(formData: FormData): Promise<{ error?: string }> 
 
   if (!email || !password) return { error: 'Email et mot de passe requis.' };
 
+  // ── Rate limiting par IP ──────────────────────────────────────────────────
+  const forwarded = headers().get('x-forwarded-for');
+  const ip = forwarded
+    ? forwarded.split(',')[0].trim()
+    : (headers().get('x-real-ip') ?? '127.0.0.1');
+
+  const adminSupabase = createServerClient();
+  const windowStart = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+  const { count } = await adminSupabase
+    .from('vce_login_attempts')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip', ip)
+    .gte('created_at', windowStart);
+
+  if ((count ?? 0) >= 5) {
+    return { error: 'Trop de tentatives de connexion. Veuillez réessayer dans 15 minutes.' };
+  }
+
+  // ── Appel Auth (inchangé) ─────────────────────────────────────────────────
   const data = await supabaseAuthFetch('/token?grant_type=password', { email, password });
 
   if (data.error || data.error_code || !data.access_token) {
     console.error('[vceLogin] Echec Supabase Auth:', JSON.stringify(data));
+    await adminSupabase.from('vce_login_attempts').insert({ ip, email });
     return { error: data.error_description ?? data.msg ?? 'Identifiants incorrects.' };
   }
 
