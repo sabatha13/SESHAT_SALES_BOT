@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function VCENav() {
   return (
@@ -22,19 +23,15 @@ export default function VCENav() {
           height: '72px',
         }}
       >
-        <Link
-          href="/"
-          style={{
-            fontFamily: 'var(--font-playfair)',
-            fontSize: '1.2rem',
-            fontWeight: 700,
-            color: '#8A7818',
-            textDecoration: 'none',
-            letterSpacing: '-0.01em',
-            flexShrink: 0,
-          }}
-        >
-          Voix Cosmique Éditions
+        <Link href="/vce" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+          <Image
+            src="/images/vce/logo.png"
+            alt="Voix Cosmique Éditions"
+            width={2000}
+            height={600}
+            priority
+            style={{ height: '48px', width: 'auto' }}
+          />
         </Link>
 
         <nav style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
