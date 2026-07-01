@@ -23,7 +23,7 @@ export default function VCENav() {
           height: '72px',
         }}
       >
-        <Link href="/vce" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
+        <Link href="/" style={{ flexShrink: 0, display: 'flex', alignItems: 'center' }}>
           <Image
             src="/images/vce/logo.png"
             alt="Voix Cosmique Éditions"
