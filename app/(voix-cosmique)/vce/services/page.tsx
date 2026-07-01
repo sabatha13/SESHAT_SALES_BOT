@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { createServerClient } from '@/lib/supabase/server';
 import VCENav from '../_components/VCENav';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Services éditoriaux',
   description:

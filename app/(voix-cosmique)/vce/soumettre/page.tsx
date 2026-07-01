@@ -3,6 +3,8 @@ import { createServerClient } from '@/lib/supabase/server';
 import VCENav from '../_components/VCENav';
 import SoumettreForm from './SoumettreForm';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Soumettre mon manuscrit',
   description:
