@@ -157,7 +157,7 @@ export default async function AdminAuteursPage() {
                 </span>
                 <span style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                   <Link
-                    href={`/vce/admin/auteurs/${a.id}`}
+                    href={`/admin/auteurs/${a.id}`}
                     style={{
                       fontFamily: 'var(--font-inter)',
                       fontSize: '0.75rem',

@@ -77,7 +77,7 @@ export default async function AdminAuteurDetailPage({ params }: { params: { id: 
   return (
     <div style={{ padding: '2.5rem', maxWidth: '900px' }}>
       <Link
-        href="/vce/admin/auteurs"
+        href="/admin/auteurs"
         style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: 'var(--accent-or-texte)', textDecoration: 'none' }}
       >
         ← Retour aux auteurs
@@ -190,7 +190,7 @@ export default async function AdminAuteurDetailPage({ params }: { params: { id: 
             {(commandes ?? []).map((c) => (
               <Link
                 key={c.id}
-                href={`/vce/admin/commandes/${c.id}`}
+                href={`/admin/commandes/${c.id}`}
                 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', textDecoration: 'none', paddingBottom: '0.6rem', borderBottom: '1px solid var(--or-pale)' }}
               >
                 <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: 'var(--texte-carte)', fontWeight: 500 }}>{c.titre}</span>

@@ -79,7 +79,7 @@ export default async function AdminMessageriePage() {
             return (
               <Link
                 key={fil.commandeId}
-                href={`/vce/admin/commandes/${fil.commandeId}`}
+                href={`/admin/commandes/${fil.commandeId}`}
                 style={{
                   background: 'var(--carte)',
                   border: '1px solid var(--carte-bordure)',

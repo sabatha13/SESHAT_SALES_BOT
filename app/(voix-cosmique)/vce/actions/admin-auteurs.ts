@@ -73,5 +73,5 @@ export async function supprimerAuteur(formData: FormData): Promise<void> {
   }
 
   revalidatePath('/vce/admin/auteurs');
-  redirect('/vce/admin/auteurs');
+  redirect('/admin/auteurs');
 }

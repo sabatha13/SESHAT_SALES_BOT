@@ -101,7 +101,7 @@ export default async function AdminCommandesPage() {
                 minWidth: '900px',
               }}
             >
-              <Link href={`/vce/admin/commandes/${c.id}`} style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: 'var(--texte-carte)', fontWeight: 500, textDecoration: 'none' }}>
+              <Link href={`/admin/commandes/${c.id}`} style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: 'var(--texte-carte)', fontWeight: 500, textDecoration: 'none' }}>
                 {c.titre}
               </Link>
               <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: 'var(--texte-carte-secondaire)' }}>

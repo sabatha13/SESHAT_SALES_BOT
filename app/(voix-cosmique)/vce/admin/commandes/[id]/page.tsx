@@ -73,7 +73,7 @@ export default async function AdminCommandeDetailPage({ params }: { params: { id
 
   return (
     <div style={{ padding: '2.5rem', maxWidth: '900px' }}>
-      <Link href="/vce/admin/commandes" style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: 'var(--accent-or-texte)', textDecoration: 'none' }}>
+      <Link href="/admin/commandes" style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', color: 'var(--accent-or-texte)', textDecoration: 'none' }}>
         ← Retour aux commandes
       </Link>
 
@@ -83,7 +83,7 @@ export default async function AdminCommandeDetailPage({ params }: { params: { id
             {commande.titre}
           </h1>
           {auteur && (
-            <Link href={`/vce/admin/auteurs/${auteur.id}`} style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: 'var(--accent-or-texte)', textDecoration: 'none' }}>
+            <Link href={`/admin/auteurs/${auteur.id}`} style={{ fontFamily: 'var(--font-inter)', fontSize: '0.85rem', color: 'var(--accent-or-texte)', textDecoration: 'none' }}>
               {auteur.prenom} {auteur.nom} · {auteur.email}
             </Link>
           )}

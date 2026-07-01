@@ -162,7 +162,7 @@ export default async function AdminDashboardPage() {
               {(dernieresCommandes ?? []).map((c) => (
                 <Link
                   key={c.id}
-                  href={`/vce/admin/commandes/${c.id}`}
+                  href={`/admin/commandes/${c.id}`}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -229,7 +229,7 @@ export default async function AdminDashboardPage() {
               {(derniersAuteurs ?? []).map((a) => (
                 <Link
                   key={a.id}
-                  href={`/vce/admin/auteurs/${a.id}`}
+                  href={`/admin/auteurs/${a.id}`}
                   style={{
                     display: 'flex',
                     justifyContent: 'space-between',
