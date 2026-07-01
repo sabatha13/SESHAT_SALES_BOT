@@ -9,6 +9,7 @@ import CommandeRealtime, {
   type CommandeData,
   type EtapeData,
 } from '../_components/CommandeRealtime';
+import BoutonPaiementAcompte from './_components/BoutonPaiementAcompte';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -104,6 +105,15 @@ export default async function CommandeDetailPage({
       if (item.signedUrl) signedUrlMap.set(item.path, item.signedUrl);
     }
   }
+
+  const acomptePaye = parseFloat(String(commande.acompte_paye ?? 0));
+  const montantTotalNum = commande.montant_total !== null
+    ? parseFloat(String(commande.montant_total))
+    : null;
+  const showBoutonPaiement =
+    acomptePaye === 0 &&
+    commande.statut !== 'production' &&
+    montantTotalNum !== null;
 
   // Données initiales passées au composant Realtime
   const commandeInitiale: CommandeData = {
@@ -298,6 +308,52 @@ export default async function CommandeDetailPage({
               </div>
             ))}
           </div>
+
+          {/* Bouton paiement acompte */}
+          {showBoutonPaiement && (
+            <div
+              style={{
+                background: 'var(--carte)',
+                border: '1px solid var(--carte-bordure)',
+                borderRadius: '8px',
+                padding: '1.5rem 2rem',
+                marginBottom: '2rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '1rem',
+              }}
+            >
+              <div>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-playfair)',
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    color: '#3D2B1A',
+                    margin: '0 0 0.25rem',
+                  }}
+                >
+                  Acompte requis pour démarrer votre projet
+                </p>
+                <p
+                  style={{
+                    fontFamily: 'var(--font-inter)',
+                    fontSize: '0.8rem',
+                    color: '#6B4C2F',
+                    margin: 0,
+                  }}
+                >
+                  50 % du montant total — le solde sera réglé à la livraison.
+                </p>
+              </div>
+              <BoutonPaiementAcompte
+                commandeId={commande.id}
+                montantTotal={montantTotalNum!}
+              />
+            </div>
+          )}
 
           {/* Grille principale : Realtime + Fichiers */}
           <div
