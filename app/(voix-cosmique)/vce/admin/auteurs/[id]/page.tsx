@@ -6,6 +6,8 @@ import { createServerClient } from '@/lib/supabase/server';
 import { assertVceAdmin } from '@/lib/vce-admin';
 import { suspendreAuteur, reactiverAuteur } from '../../../actions/admin-auteurs';
 import SupprimerAuteurButton from './_components/SupprimerAuteurButton';
+import BioPhotoForm from './_components/BioPhotoForm';
+import { slugify } from '@/lib/vce/slug';
 
 const STATUT_LABELS: Record<string, string> = {
   briefing: 'Briefing',
@@ -248,6 +250,18 @@ export default async function AdminAuteurDetailPage({ params }: { params: { id: 
             ))}
           </div>
         )}
+      </div>
+
+      {/* Bio & Photo (contenu vitrine publique) */}
+      <div style={cardStyle}>
+        <h2 style={sectionTitle}>Bio &amp; Photo</h2>
+        <BioPhotoForm
+          auteurId={auteur.id}
+          bio={auteur.bio}
+          photoUrl={auteur.photo_url}
+          slug={auteur.slug}
+          slugDefaut={slugify(auteur.nom_plume || `${auteur.prenom} ${auteur.nom}`)}
+        />
       </div>
 
       {/* Zone dangereuse */}

@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { href: '/admin', label: 'Tableau de bord' },
   { href: '/admin/commandes', label: 'Commandes' },
   { href: '/admin/auteurs', label: 'Auteurs' },
+  { href: '/admin/livres', label: 'Livres' },
   { href: '/admin/messagerie', label: 'Messagerie' },
   { href: '/admin/fichiers', label: 'Fichiers' },
   { href: '/admin/paiements', label: 'Paiements' },
