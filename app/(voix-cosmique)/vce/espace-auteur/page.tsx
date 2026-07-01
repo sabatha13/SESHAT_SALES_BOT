@@ -3,6 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { getVceAuteur } from '@/lib/vce/session';
 import VCENav from '../_components/VCENav';
 import { vceLogout } from '../actions/auth';
+import BandeauPaiementSucces from './_components/BandeauPaiementSucces';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -64,7 +65,11 @@ const NAV_ITEMS = [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-export default async function EspaceAuteurPage() {
+interface PageProps {
+  searchParams: { payment?: string; commande?: string };
+}
+
+export default async function EspaceAuteurPage({ searchParams }: PageProps) {
   const auteur = await getVceAuteur();
   const supabase = createServerClient();
 
@@ -144,6 +149,10 @@ export default async function EspaceAuteurPage() {
   return (
     <>
       <VCENav />
+
+      {searchParams.payment === 'success' && searchParams.commande && (
+        <BandeauPaiementSucces commandeId={searchParams.commande} />
+      )}
 
       {/* ── Sub-nav espace auteur ───────────────────────────────────────────── */}
       <div style={{ background: '#3D2B1A', borderBottom: '1px solid rgba(181,160,32,0.2)' }}>
