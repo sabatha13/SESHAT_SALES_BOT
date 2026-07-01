@@ -160,9 +160,9 @@ export default async function VCELandingPage() {
       {/* ── Hero (façade) ────────────────────────────────────────────────── */}
       <section
         style={{
-          backgroundImage: "url('/images/vce/vce.png')",
+          backgroundImage: "url('/images/vce/vce.final.png')",
           backgroundSize: 'cover',
-          backgroundPosition: 'center 60%',
+          backgroundPosition: 'center 18%',
           backgroundColor: '#3D2B1A',
           height: 'clamp(180px, 25vw, 420px)',
           overflow: 'hidden',
