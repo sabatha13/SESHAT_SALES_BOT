@@ -160,7 +160,10 @@ export default async function VCELandingPage() {
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section
         style={{
-          background: '#3D2B1A',
+          backgroundImage: "url('/images/vce/vce.png')",
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundColor: '#3D2B1A',
           padding: '6rem 2rem',
           textAlign: 'center',
           position: 'relative',
@@ -651,7 +654,7 @@ export default async function VCELandingPage() {
                   key={pkg.id}
                   style={{
                     background: i === 1 ? 'var(--carte)' : 'rgba(255,255,255,0.04)',
-                    border: i === 1 ? 'none' : '1px solid rgba(181,160,32,0.2)',
+                    border: i === 1 ? '1px solid var(--carte-bordure)' : '1px solid rgba(181,160,32,0.2)',
                     borderRadius: '8px',
                     padding: '2rem',
                     textAlign: 'center',
@@ -665,8 +668,8 @@ export default async function VCELandingPage() {
                         top: '-12px',
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        background: '#3D2B1A',
-                        color: '#B5A020',
+                        background: 'var(--bandeau-fond)',
+                        color: 'var(--bandeau-texte)',
                         fontFamily: 'var(--font-inter)',
                         fontSize: '0.65rem',
                         letterSpacing: '0.15em',

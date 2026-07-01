@@ -316,7 +316,7 @@ export default async function ServicesPage() {
                   key={pkg.id}
                   style={{
                     background: i === 1 ? 'var(--carte)' : 'rgba(255,255,255,0.04)',
-                    border: i === 1 ? 'none' : '1px solid rgba(181,160,32,0.2)',
+                    border: i === 1 ? '1px solid var(--carte-bordure)' : '1px solid rgba(181,160,32,0.2)',
                     borderRadius: '8px',
                     padding: '2rem',
                     position: 'relative',
@@ -329,8 +329,8 @@ export default async function ServicesPage() {
                         top: '-12px',
                         left: '50%',
                         transform: 'translateX(-50%)',
-                        background: '#3D2B1A',
-                        color: '#B5A020',
+                        background: 'var(--bandeau-fond)',
+                        color: 'var(--bandeau-texte)',
                         fontFamily: 'var(--font-inter)',
                         fontSize: '0.65rem',
                         letterSpacing: '0.15em',
