@@ -162,46 +162,12 @@ export default async function VCELandingPage() {
         style={{
           backgroundImage: "url('/images/vce/vce.png')",
           backgroundSize: 'cover',
-          backgroundPosition: 'center',
+          backgroundPosition: 'center 60%',
           backgroundColor: '#3D2B1A',
-          minHeight: '320px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          position: 'relative',
+          height: 'clamp(180px, 25vw, 420px)',
           overflow: 'hidden',
         }}
-      >
-        <div
-          aria-hidden
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '700px',
-            height: '700px',
-            borderRadius: '50%',
-            background:
-              'radial-gradient(circle, rgba(181,160,32,0.07) 0%, transparent 70%)',
-            pointerEvents: 'none',
-          }}
-        />
-        <p
-          style={{
-            fontFamily: 'var(--font-inter)',
-            fontSize: '0.75rem',
-            letterSpacing: '0.2em',
-            textTransform: 'uppercase',
-            color: '#B5A020',
-            margin: 0,
-            position: 'relative',
-          }}
-        >
-          Maison d&apos;édition indépendante
-        </p>
-      </section>
+      />
 
       {/* ── Titre & CTA ──────────────────────────────────────────────────── */}
       <section
