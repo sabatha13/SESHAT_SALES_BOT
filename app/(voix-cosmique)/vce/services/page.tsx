@@ -40,6 +40,79 @@ const CATEGORIES: Record<string, string> = {
   publication: 'Publication',
 };
 
+const SERVICE_DETAILS: Record<string, { prestations: string[]; ideal: string }> = {
+  analyse: {
+    prestations: [
+      'Analyse complète du manuscrit',
+      'Identification des forces et faiblesses',
+      'Évaluation de la structure globale',
+      'Détection des incohérences et zones floues',
+      "Proposition d'un plan d'amélioration clair",
+    ],
+    ideal: "Idéal si vous ne savez pas comment améliorer votre livre ou par où commencer.",
+  },
+  correction: {
+    prestations: [
+      'Organisation logique des idées',
+      'Création ou amélioration du plan du livre',
+      'Réorganisation des chapitres',
+      'Amélioration de la progression du contenu',
+      'Clarification du message principal',
+      'Correction des fautes grammaticales et orthographiques',
+      'Amélioration de la fluidité du texte',
+      'Réduction des répétitions',
+      'Clarification des phrases complexes',
+      "Harmonisation du style d'écriture",
+    ],
+    ideal: "Idéal si votre manuscrit est désorganisé ou difficile à suivre.",
+  },
+  redaction: {
+    prestations: [
+      'Rédaction complète du livre',
+      'Structuration du contenu dès le départ',
+      'Respect de votre idée et de votre vision',
+      'Adaptation du style à votre personnalité',
+      'Accompagnement tout au long du processus',
+    ],
+    ideal: "Idéal si vous avez une idée mais pas le temps ou la capacité d'écrire.",
+  },
+  mise_en_page: {
+    prestations: [
+      'Mise en forme professionnelle du document',
+      'Adaptation aux standards Amazon KDP',
+      'Structuration des titres et chapitres',
+      'Optimisation pour lecture numérique ou papier',
+      "Création d'un intérieur propre et lisible",
+    ],
+    ideal: "Idéal si votre livre est prêt mais mal présenté.",
+  },
+  design: {
+    prestations: [
+      'Design professionnel et attractif',
+      'Adaptation au genre du livre',
+      'Création visuelle conforme au marché',
+      'Version ebook ou imprimée',
+      "Optimisation pour capter l'attention",
+    ],
+    ideal: "Idéal pour attirer l'attention et augmenter les ventes.",
+  },
+  publication: {
+    prestations: [
+      'Création du compte KDP (si nécessaire)',
+      'Mise en ligne du livre',
+      'Configuration des formats (ebook / papier)',
+      'Vérification des fichiers avant publication',
+      "Assistance jusqu'à la mise en ligne finale",
+      'Recherche de mots-clés pertinents',
+      'Optimisation du titre du livre',
+      "Rédaction d'une description efficace",
+      'Amélioration de la visibilité sur Amazon',
+      'Positionnement stratégique du livre',
+    ],
+    ideal: "Idéal si vous ne savez pas comment publier correctement, pour rendre votre livre visible et vendable.",
+  },
+};
+
 export default async function ServicesPage() {
   const supabase = createServerClient();
   const [{ data: services }, { data: packages }] = await Promise.all([
@@ -254,6 +327,43 @@ export default async function ServicesPage() {
                     {service.description}
                   </p>
                 )}
+
+                {SERVICE_DETAILS[service.categorie ?? ''] && (() => {
+                  const details = SERVICE_DETAILS[service.categorie!];
+                  return (
+                    <>
+                      <ol
+                        style={{
+                          fontFamily: 'var(--font-inter)',
+                          fontSize: '0.85rem',
+                          color: 'var(--texte-carte-secondaire)',
+                          lineHeight: 1.6,
+                          paddingLeft: '1.25rem',
+                          margin: '0 0 1rem 0',
+                        }}
+                      >
+                        {details.prestations.map((p, i) => (
+                          <li key={i} style={{ marginBottom: '0.2rem' }}>{p}</li>
+                        ))}
+                      </ol>
+                      <div
+                        style={{
+                          background: 'rgba(122, 106, 16, 0.07)',
+                          border: '1px solid rgba(122, 106, 16, 0.2)',
+                          borderRadius: '4px',
+                          padding: '0.6rem 0.9rem',
+                          marginBottom: '1.5rem',
+                          fontFamily: 'var(--font-inter)',
+                          fontSize: '0.85rem',
+                          color: 'var(--accent-or-texte)',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        ✦ {details.ideal}
+                      </div>
+                    </>
+                  );
+                })()}
 
                 <Link
                   href={`/soumettre?service=${service.id}`}
