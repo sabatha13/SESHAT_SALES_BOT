@@ -650,7 +650,7 @@ export default async function VCELandingPage() {
                 <div
                   key={pkg.id}
                   style={{
-                    background: i === 1 ? '#B5A020' : 'rgba(255,255,255,0.04)',
+                    background: i === 1 ? 'var(--carte)' : 'rgba(255,255,255,0.04)',
                     border: i === 1 ? 'none' : '1px solid rgba(181,160,32,0.2)',
                     borderRadius: '8px',
                     padding: '2rem',
@@ -686,7 +686,7 @@ export default async function VCELandingPage() {
                       fontFamily: 'var(--font-playfair)',
                       fontSize: '1.4rem',
                       fontWeight: 700,
-                      color: i === 1 ? '#FAF3E0' : '#F0E8C0',
+                      color: i === 1 ? 'var(--texte-carte)' : '#F0E8C0',
                       marginBottom: '0.5rem',
                     }}
                   >
@@ -698,7 +698,7 @@ export default async function VCELandingPage() {
                       style={{
                         fontFamily: 'var(--font-inter)',
                         fontSize: '0.875rem',
-                        color: i === 1 ? 'rgba(250,243,224,0.85)' : '#C4B08A',
+                        color: i === 1 ? 'var(--texte-carte-secondaire)' : '#C4B08A',
                         marginBottom: '1.5rem',
                         lineHeight: 1.5,
                       }}
@@ -712,7 +712,7 @@ export default async function VCELandingPage() {
                       fontFamily: 'var(--font-playfair)',
                       fontSize: '2.25rem',
                       fontWeight: 700,
-                      color: i === 1 ? '#FAF3E0' : '#B5A020',
+                      color: i === 1 ? 'var(--texte-carte)' : '#B5A020',
                       marginBottom: '0.25rem',
                     }}
                   >
@@ -724,7 +724,7 @@ export default async function VCELandingPage() {
                       style={{
                         fontFamily: 'var(--font-inter)',
                         fontSize: '0.8rem',
-                        color: i === 1 ? 'rgba(250,243,224,0.75)' : 'rgba(181,160,32,0.65)',
+                        color: i === 1 ? 'var(--texte-carte-secondaire)' : 'rgba(181,160,32,0.65)',
                         marginBottom: '1.5rem',
                       }}
                     >
@@ -807,8 +807,8 @@ export default async function VCELandingPage() {
               <div
                 key={p.nom}
                 style={{
-                  background: '#FFFEF5',
-                  border: '1px solid #E8DFB0',
+                  background: 'var(--carte)',
+                  border: '1px solid var(--carte-bordure)',
                   borderRadius: '8px',
                   padding: '1.25rem',
                   textAlign: 'center',
@@ -820,7 +820,7 @@ export default async function VCELandingPage() {
                     fontFamily: 'var(--font-inter)',
                     fontSize: '0.9rem',
                     fontWeight: 600,
-                    color: '#3D2B1A',
+                    color: 'var(--texte-carte)',
                     margin: '0 0 0.25rem',
                   }}
                 >
@@ -830,7 +830,7 @@ export default async function VCELandingPage() {
                   style={{
                     fontFamily: 'var(--font-inter)',
                     fontSize: '0.75rem',
-                    color: '#8A7818',
+                    color: 'var(--texte-carte-secondaire)',
                     margin: 0,
                   }}
                 >

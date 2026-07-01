@@ -296,8 +296,8 @@ export default async function EspaceAuteurPage() {
               const card = (
                 <div
                   style={{
-                    background: '#FFFEF5',
-                    border: '1px solid #E8DFB0',
+                    background: 'var(--carte)',
+                    border: '1px solid var(--carte-bordure)',
                     borderRadius: '8px',
                     padding: '1.5rem',
                   }}
@@ -308,7 +308,7 @@ export default async function EspaceAuteurPage() {
                       fontSize: '0.7rem',
                       letterSpacing: '0.1em',
                       textTransform: 'uppercase',
-                      color: '#8A7818',
+                      color: 'var(--texte-carte-secondaire)',
                       margin: '0 0 0.5rem',
                     }}
                   >
@@ -319,7 +319,7 @@ export default async function EspaceAuteurPage() {
                       fontFamily: 'var(--font-playfair)',
                       fontSize: '2rem',
                       fontWeight: 700,
-                      color: '#3D2B1A',
+                      color: 'var(--texte-carte)',
                       margin: 0,
                       lineHeight: 1,
                     }}
@@ -387,8 +387,8 @@ export default async function EspaceAuteurPage() {
               {projetsList.length === 0 ? (
                 <div
                   style={{
-                    background: '#FFFEF5',
-                    border: '1px solid #E8DFB0',
+                    background: 'var(--carte)',
+                    border: '1px solid var(--carte-bordure)',
                     borderRadius: '8px',
                     padding: '3rem 2rem',
                     textAlign: 'center',
@@ -398,7 +398,7 @@ export default async function EspaceAuteurPage() {
                     style={{
                       fontFamily: 'var(--font-inter)',
                       fontSize: '0.9rem',
-                      color: '#6B4C2F',
+                      color: 'var(--texte-carte-secondaire)',
                       marginBottom: '1.5rem',
                     }}
                   >
@@ -435,8 +435,8 @@ export default async function EspaceAuteurPage() {
                       >
                         <article
                           style={{
-                            background: '#FFFEF5',
-                            border: '1px solid #E8DFB0',
+                            background: 'var(--carte)',
+                            border: '1px solid var(--carte-bordure)',
                             borderRadius: '8px',
                             padding: '1.25rem 1.5rem',
                           }}
@@ -456,7 +456,7 @@ export default async function EspaceAuteurPage() {
                                 fontFamily: 'var(--font-playfair)',
                                 fontSize: '0.95rem',
                                 fontWeight: 600,
-                                color: '#3D2B1A',
+                                color: 'var(--texte-carte)',
                                 margin: 0,
                                 flex: 1,
                               }}
@@ -512,7 +512,7 @@ export default async function EspaceAuteurPage() {
                               style={{
                                 fontFamily: 'var(--font-inter)',
                                 fontSize: '0.7rem',
-                                color: '#8A7818',
+                                color: 'var(--texte-carte-secondaire)',
                                 fontWeight: 600,
                               }}
                             >
@@ -523,7 +523,7 @@ export default async function EspaceAuteurPage() {
                                 style={{
                                   fontFamily: 'var(--font-inter)',
                                   fontSize: '0.7rem',
-                                  color: '#6B4C2F',
+                                  color: 'var(--texte-carte-secondaire)',
                                 }}
                               >
                                 Livraison : {formatDate(projet.date_livraison_estimee)}
@@ -597,8 +597,8 @@ export default async function EspaceAuteurPage() {
                 <Link href="/espace-auteur/messagerie" style={{ textDecoration: 'none' }}>
                   <div
                     style={{
-                      background: '#FFFEF5',
-                      border: '1px solid #E8DFB0',
+                      background: 'var(--carte)',
+                      border: '1px solid var(--carte-bordure)',
                       borderLeft: '3px solid #B5A020',
                       borderRadius: '8px',
                       padding: '1.25rem 1.5rem',
@@ -638,7 +638,7 @@ export default async function EspaceAuteurPage() {
                             fontFamily: 'var(--font-inter)',
                             fontSize: '0.8rem',
                             fontWeight: 600,
-                            color: '#3D2B1A',
+                            color: 'var(--texte-carte)',
                             margin: 0,
                           }}
                         >
@@ -649,7 +649,7 @@ export default async function EspaceAuteurPage() {
                             style={{
                               fontFamily: 'var(--font-inter)',
                               fontSize: '0.7rem',
-                              color: '#8A7818',
+                              color: 'var(--texte-carte-secondaire)',
                               margin: 0,
                             }}
                           >
@@ -664,7 +664,7 @@ export default async function EspaceAuteurPage() {
                       style={{
                         fontFamily: 'var(--font-inter)',
                         fontSize: '0.85rem',
-                        color: '#3D2B1A',
+                        color: 'var(--texte-carte)',
                         lineHeight: 1.55,
                         margin: '0 0 0.75rem',
                       }}
@@ -678,7 +678,7 @@ export default async function EspaceAuteurPage() {
                       style={{
                         fontFamily: 'var(--font-inter)',
                         fontSize: '0.7rem',
-                        color: '#8A7818',
+                        color: 'var(--texte-carte-secondaire)',
                         margin: 0,
                       }}
                     >
@@ -689,8 +689,8 @@ export default async function EspaceAuteurPage() {
               ) : (
                 <div
                   style={{
-                    background: '#FFFEF5',
-                    border: '1px solid #E8DFB0',
+                    background: 'var(--carte)',
+                    border: '1px solid var(--carte-bordure)',
                     borderRadius: '8px',
                     padding: '2.5rem 2rem',
                     textAlign: 'center',
@@ -700,7 +700,7 @@ export default async function EspaceAuteurPage() {
                     style={{
                       fontFamily: 'var(--font-inter)',
                       fontSize: '0.875rem',
-                      color: '#6B4C2F',
+                      color: 'var(--texte-carte-secondaire)',
                       margin: 0,
                     }}
                   >
