@@ -40,6 +40,7 @@ export default function VoixCosmiqueLayout({ children }: { children: React.React
           '--texte-carte-secondaire': '#2E2E2E',
           '--carte-bordure': '#E5A700',
           '--accent-or': '#E5A700',
+          '--accent-or-texte': '#7A6A10',
           '--bandeau-fond': '#0A0800',
           '--bandeau-texte': '#E5A700',
           minHeight: '100vh',

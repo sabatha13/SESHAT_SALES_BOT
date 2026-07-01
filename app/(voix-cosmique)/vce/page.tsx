@@ -157,14 +157,17 @@ export default async function VCELandingPage() {
     <>
       <VCENav />
 
-      {/* ── Hero ─────────────────────────────────────────────────────────── */}
+      {/* ── Hero (façade) ────────────────────────────────────────────────── */}
       <section
         style={{
           backgroundImage: "url('/images/vce/vce.png')",
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundColor: '#3D2B1A',
-          padding: '6rem 2rem',
+          minHeight: '320px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           textAlign: 'center',
           position: 'relative',
           overflow: 'hidden',
@@ -185,7 +188,6 @@ export default async function VCELandingPage() {
             pointerEvents: 'none',
           }}
         />
-
         <p
           style={{
             fontFamily: 'var(--font-inter)',
@@ -193,38 +195,45 @@ export default async function VCELandingPage() {
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
             color: '#B5A020',
-            marginBottom: '1.5rem',
+            margin: 0,
             position: 'relative',
           }}
         >
           Maison d&apos;édition indépendante
         </p>
+      </section>
 
+      {/* ── Titre & CTA ──────────────────────────────────────────────────── */}
+      <section
+        style={{
+          background: 'var(--n)',
+          padding: '4rem 2rem',
+          textAlign: 'center',
+        }}
+      >
         <h1
           style={{
             fontFamily: 'var(--font-playfair)',
             fontSize: 'clamp(2rem, 5vw, 3.5rem)',
             fontWeight: 700,
-            color: '#F0E8C0',
+            color: 'var(--texte)',
             maxWidth: '760px',
             margin: '0 auto 1.5rem',
             lineHeight: 1.2,
-            position: 'relative',
           }}
         >
           Transformez votre manuscrit en{' '}
-          <span style={{ color: '#B5A020' }}>chef-d&apos;œuvre</span>
+          <span style={{ color: 'var(--accent-or-texte)' }}>chef-d&apos;œuvre</span>
         </h1>
 
         <p
           style={{
             fontFamily: 'var(--font-inter)',
             fontSize: '1.125rem',
-            color: '#C4B08A',
+            color: 'var(--texte-carte-secondaire)',
             maxWidth: '580px',
             margin: '0 auto 2.5rem',
             lineHeight: 1.7,
-            position: 'relative',
           }}
         >
           Voix Cosmique Éditions accompagne les auteurs de la spiritualité, du développement
@@ -237,7 +246,6 @@ export default async function VCELandingPage() {
             gap: '1rem',
             justifyContent: 'center',
             flexWrap: 'wrap',
-            position: 'relative',
           }}
         >
           <Link
@@ -260,8 +268,8 @@ export default async function VCELandingPage() {
             href="/services"
             style={{
               fontFamily: 'var(--font-inter)',
-              border: '1px solid rgba(181,160,32,0.5)',
-              color: '#B5A020',
+              border: '1px solid var(--texte)',
+              color: 'var(--texte)',
               padding: '0.9rem 2rem',
               borderRadius: '4px',
               textDecoration: 'none',
