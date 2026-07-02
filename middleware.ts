@@ -15,8 +15,12 @@ function isVCERequest(req: NextRequest): boolean {
 async function handleVCERequest(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
 
-  // Protect /espace-auteur/* — validate Supabase JWT, not just cookie presence
-  if (pathname.startsWith('/espace-auteur')) {
+  // Tokens rafraîchis pendant cette requête (posés sur la réponse finale, s'il y a lieu)
+  let refreshedAccessToken: string | null = null;
+  let refreshedRefreshToken: string | null = null;
+
+  // Protect /espace-auteur/* et /admin/* — validate Supabase JWT, refresh si expiré avant de rediriger
+  if (pathname.startsWith('/espace-auteur') || pathname.startsWith('/admin')) {
     const token = req.cookies.get('vce_auth_session')?.value;
     const loginUrl = new URL('/connexion', req.url);
     loginUrl.searchParams.set('from', pathname);
@@ -29,13 +33,77 @@ async function handleVCERequest(req: NextRequest): Promise<NextResponse> {
       { auth: { persistSession: false } }
     );
     const { error } = await supabase.auth.getUser(token);
-    if (error) return NextResponse.redirect(loginUrl);
+
+    if (error) {
+      // Access token expiré/invalide — tente un refresh avant de rediriger vers /connexion
+      const refreshToken = req.cookies.get('vce_auth_refresh')?.value;
+      if (!refreshToken) return NextResponse.redirect(loginUrl);
+
+      const refreshRes = await fetch(
+        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+          },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        }
+      );
+      const refreshData = await refreshRes.json();
+
+      if (!refreshRes.ok || !refreshData.access_token || !refreshData.refresh_token) {
+        return NextResponse.redirect(loginUrl);
+      }
+
+      refreshedAccessToken = refreshData.access_token;
+      refreshedRefreshToken = refreshData.refresh_token;
+    }
   }
 
   // Rewrite VCE host paths to internal /vce/* prefix (keeps URL unchanged for user)
   const rewritten = req.nextUrl.clone();
   rewritten.pathname = `/vce${pathname === '/' ? '' : pathname}`;
-  return NextResponse.rewrite(rewritten);
+
+  // Si un refresh a eu lieu, propage le nouvel access token à CETTE requête
+  // (pour que le Server Component/Action en aval voie un cookie déjà valide)
+  let requestHeaders = req.headers;
+  if (refreshedAccessToken) {
+    requestHeaders = new Headers(req.headers);
+    const existingCookie = requestHeaders.get('cookie') ?? '';
+    const withoutOldSession = existingCookie
+      .split('; ')
+      .filter((c) => !c.startsWith('vce_auth_session='))
+      .join('; ');
+    requestHeaders.set(
+      'cookie',
+      `${withoutOldSession}${withoutOldSession ? '; ' : ''}vce_auth_session=${refreshedAccessToken}`
+    );
+  }
+
+  const response = refreshedAccessToken
+    ? NextResponse.rewrite(rewritten, { request: { headers: requestHeaders } })
+    : NextResponse.rewrite(rewritten);
+
+  // Persiste les nouveaux tokens côté navigateur — mêmes options que setSessionCookies()
+  if (refreshedAccessToken && refreshedRefreshToken) {
+    response.cookies.set('vce_auth_session', refreshedAccessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60,
+    });
+    response.cookies.set('vce_auth_refresh', refreshedRefreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30,
+    });
+  }
+
+  return response;
 }
 
 // ─── CDS public routes (Clerk) ────────────────────────────────────────────────
