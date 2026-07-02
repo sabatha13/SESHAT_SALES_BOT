@@ -109,6 +109,11 @@ export default function LivreForm({ mode, auteurs, livre }: Props) {
           Livre enregistré avec succès.
         </div>
       )}
+      {state.warning && (
+        <div style={{ background: '#FEF3C7', color: '#92400E', padding: '0.75rem 1rem', borderRadius: '4px', fontSize: '0.875rem', fontFamily: 'var(--font-inter)', marginBottom: '1rem' }}>
+          {state.warning}
+        </div>
+      )}
 
       <div style={fieldStyle}>
         <label style={labelStyle}>Titre *</label>
@@ -164,8 +169,37 @@ export default function LivreForm({ mode, auteurs, livre }: Props) {
       </div>
 
       <div style={fieldStyle}>
-        <label style={labelStyle}>URL de couverture</label>
-        <input type="text" name="couverture_url" defaultValue={livre?.couverture_url ?? ''} style={inputStyle} placeholder="https://..." />
+        <label style={labelStyle}>Couverture (JPG, PNG, WebP — max 2 Mo)</label>
+
+        {/* Aperçu de la couverture actuelle */}
+        {livre?.couverture_url && (
+          <img
+            src={livre.couverture_url}
+            alt="Couverture actuelle"
+            style={{
+              width: '128px',
+              height: '176px',
+              objectFit: 'cover',
+              borderRadius: '6px',
+              border: '1px solid var(--carte-bordure)',
+              display: 'block',
+              marginBottom: '0.6rem',
+            }}
+          />
+        )}
+
+        {/* Fallback : conserve l'URL existante si aucun fichier n'est envoyé */}
+        <input type="hidden" name="couverture_url_actuelle" value={livre?.couverture_url ?? ''} />
+
+        <input
+          type="file"
+          name="couverture_file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          style={{ fontFamily: 'var(--font-inter)', fontSize: '0.82rem', color: 'var(--texte)' }}
+        />
+        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.7rem', color: 'var(--accent-or-texte)', margin: '0.3rem 0 0' }}>
+          Laisse vide pour conserver la couverture actuelle.
+        </p>
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0 1.25rem' }}>
