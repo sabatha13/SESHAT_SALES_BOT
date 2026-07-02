@@ -15,6 +15,11 @@ function isVCERequest(req: NextRequest): boolean {
 async function handleVCERequest(req: NextRequest): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
 
+  // /api/* est déjà servi à son chemin réel (app/api/vce/...) — pas de préfixe /vce à appliquer
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
   // Tokens rafraîchis pendant cette requête (posés sur la réponse finale, s'il y a lieu)
   let refreshedAccessToken: string | null = null;
   let refreshedRefreshToken: string | null = null;
