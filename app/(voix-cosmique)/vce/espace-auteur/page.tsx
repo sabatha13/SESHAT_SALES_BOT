@@ -286,7 +286,7 @@ export default async function EspaceAuteurPage({ searchParams }: PageProps) {
               {
                 label: 'Livres publiés',
                 value: livresPublies ?? 0,
-                href: null,
+                href: '/espace-auteur/livres',
                 money: false,
               },
               {
