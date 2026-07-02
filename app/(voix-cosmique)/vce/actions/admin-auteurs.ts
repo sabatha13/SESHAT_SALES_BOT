@@ -89,6 +89,7 @@ export async function updateBioAuteur(
   const auteurId = formData.get('auteur_id') as string;
   if (!auteurId) return { error: 'Auteur introuvable.' };
 
+  const bio_courte = (formData.get('bio_courte') as string)?.trim().slice(0, 150) || null;
   const bio = (formData.get('bio') as string)?.trim() || null;
   const photo_url = (formData.get('photo_url') as string)?.trim() || null;
   const slugRaw = (formData.get('slug') as string)?.trim();
@@ -97,7 +98,7 @@ export async function updateBioAuteur(
   const supabase = createServerClient();
   const { error } = await supabase
     .from('vce_auteurs')
-    .update({ bio, photo_url, slug, updated_at: new Date().toISOString() })
+    .update({ bio_courte, bio, photo_url, slug, updated_at: new Date().toISOString() })
     .eq('id', auteurId);
 
   if (error) {

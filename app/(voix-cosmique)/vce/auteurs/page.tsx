@@ -10,6 +10,7 @@ interface Auteur {
   prenom: string;
   nom: string;
   nom_plume: string | null;
+  bio_courte: string | null;
   bio: string | null;
   photo_url: string | null;
   slug: string | null;
@@ -19,12 +20,19 @@ function initiales(prenom: string, nom: string): string {
   return `${prenom.charAt(0)}${nom.charAt(0)}`.toUpperCase();
 }
 
+// Extrait d'accroche : bio_courte si dispo, sinon bio complète tronquée à 120 car.
+function accroche(auteur: Auteur): string | null {
+  if (auteur.bio_courte) return auteur.bio_courte;
+  if (auteur.bio) return auteur.bio.length > 120 ? `${auteur.bio.slice(0, 120).trimEnd()}…` : auteur.bio;
+  return null;
+}
+
 export default async function AuteursListePage() {
   const supabase = createServerClient();
 
   const { data: auteursData } = await supabase
     .from('vce_auteurs')
-    .select('id, prenom, nom, nom_plume, bio, photo_url, slug')
+    .select('id, prenom, nom, nom_plume, bio_courte, bio, photo_url, slug')
     .eq('is_active', true)
     .not('slug', 'is', null)
     .order('prenom', { ascending: true });
@@ -55,6 +63,7 @@ export default async function AuteursListePage() {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '2rem' }}>
               {auteurs.map((auteur) => {
                 const nomAffiche = auteur.nom_plume || `${auteur.prenom} ${auteur.nom}`;
+                const texteAccroche = accroche(auteur);
                 return (
                   <Link key={auteur.id} href={`/auteurs/${auteur.slug}`} style={{ textDecoration: 'none' }}>
                     <article style={{ background: 'var(--carte)', border: '1px solid var(--carte-bordure)', borderRadius: '12px', padding: '1.75rem', textAlign: 'center', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -70,9 +79,9 @@ export default async function AuteursListePage() {
                       <h2 style={{ fontFamily: 'var(--font-playfair)', fontSize: '1.15rem', fontWeight: 600, color: 'var(--texte-carte)', margin: '0 0 0.6rem' }}>
                         {nomAffiche}
                       </h2>
-                      {auteur.bio && (
-                        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.82rem', color: 'var(--texte-carte-secondaire)', margin: 0, lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                          {auteur.bio}
+                      {texteAccroche && (
+                        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.82rem', color: 'var(--texte-carte-secondaire)', margin: 0, lineHeight: 1.5 }}>
+                          {texteAccroche}
                         </p>
                       )}
                       <span style={{ fontFamily: 'var(--font-inter)', fontSize: '0.8rem', fontWeight: 600, color: 'var(--accent-or-texte)', marginTop: 'auto', paddingTop: '1rem' }}>

@@ -1,8 +1,11 @@
 'use client';
 
+import { useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { updateBioAuteur } from '../../../../actions/admin-auteurs';
 import type { BioAuteurState } from '../../../../actions/admin-auteurs';
+
+const BIO_COURTE_MAX = 150;
 
 function BoutonSoumettre() {
   const { pending } = useFormStatus();
@@ -53,6 +56,7 @@ const labelStyle: React.CSSProperties = {
 
 interface Props {
   auteurId: string;
+  bioCourte: string | null;
   bio: string | null;
   photoUrl: string | null;
   slug: string | null;
@@ -61,8 +65,9 @@ interface Props {
 
 const initialState: BioAuteurState = {};
 
-export default function BioPhotoForm({ auteurId, bio, photoUrl, slug, slugDefaut }: Props) {
+export default function BioPhotoForm({ auteurId, bioCourte, bio, photoUrl, slug, slugDefaut }: Props) {
   const [state, action] = useFormState(updateBioAuteur, initialState);
+  const [bioCourteLen, setBioCourteLen] = useState((bioCourte ?? '').length);
 
   return (
     <form action={action}>
@@ -80,7 +85,30 @@ export default function BioPhotoForm({ auteurId, bio, photoUrl, slug, slugDefaut
       )}
 
       <div style={{ marginBottom: '1rem' }}>
-        <label style={labelStyle}>Biographie</label>
+        <label style={labelStyle}>Bio courte (max 150 caractères — pour les cartes catalogue)</label>
+        <textarea
+          name="bio_courte"
+          defaultValue={bioCourte ?? ''}
+          maxLength={BIO_COURTE_MAX}
+          rows={2}
+          onChange={(e) => setBioCourteLen(e.target.value.length)}
+          style={{ ...inputStyle, resize: 'vertical' }}
+        />
+        <p
+          style={{
+            fontFamily: 'var(--font-inter)',
+            fontSize: '0.7rem',
+            color: bioCourteLen >= BIO_COURTE_MAX ? '#991B1B' : 'var(--accent-or-texte)',
+            margin: '0.3rem 0 0',
+            textAlign: 'right',
+          }}
+        >
+          {bioCourteLen} / {BIO_COURTE_MAX} caractères
+        </p>
+      </div>
+
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={labelStyle}>Bio complète</label>
         <textarea name="bio" defaultValue={bio ?? ''} rows={4} style={{ ...inputStyle, resize: 'vertical' }} />
       </div>
 

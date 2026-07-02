@@ -257,6 +257,7 @@ export default async function AdminAuteurDetailPage({ params }: { params: { id: 
         <h2 style={sectionTitle}>Bio &amp; Photo</h2>
         <BioPhotoForm
           auteurId={auteur.id}
+          bioCourte={auteur.bio_courte}
           bio={auteur.bio}
           photoUrl={auteur.photo_url}
           slug={auteur.slug}
