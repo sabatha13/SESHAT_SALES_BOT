@@ -91,14 +91,56 @@ export async function updateBioAuteur(
 
   const bio_courte = (formData.get('bio_courte') as string)?.trim().slice(0, 150) || null;
   const bio = (formData.get('bio') as string)?.trim() || null;
-  const photo_url = (formData.get('photo_url') as string)?.trim() || null;
   const slugRaw = (formData.get('slug') as string)?.trim();
   const slug = slugRaw ? slugify(slugRaw) : null;
 
+  // ── Photo : upload si un fichier est fourni, sinon on garde l'URL existante ──
+  const photoFile = formData.get('photo_file') as File | null;
+  const photoUrlActuelle = (formData.get('photo_url_actuelle') as string) || null;
+  let finalPhotoUrl = photoUrlActuelle;
+
   const supabase = createServerClient();
+
+  if (photoFile && photoFile.size > 0) {
+    const MAX_SIZE = 2 * 1024 * 1024;
+    const ALLOWED = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (photoFile.size > MAX_SIZE) return { error: 'Fichier trop lourd (max 2 Mo).' };
+    if (!ALLOWED.includes(photoFile.type)) {
+      return { error: 'Format non supporté (JPG, PNG, WebP uniquement).' };
+    }
+
+    // Extension dérivée du type MIME (fallback fiable si le nom n'a pas d'extension)
+    const extParType: Record<string, string> = {
+      'image/jpeg': 'jpg',
+      'image/jpg': 'jpg',
+      'image/png': 'png',
+      'image/webp': 'webp',
+    };
+    const ext = extParType[photoFile.type] ?? 'jpg';
+    const path = `auteurs/${auteurId}/photo.${ext}`;
+
+    const buffer = Buffer.from(await photoFile.arrayBuffer());
+
+    const { error: uploadError } = await supabase.storage
+      .from('vce-auteurs-photos')
+      .upload(path, buffer, { contentType: photoFile.type, upsert: true });
+
+    if (uploadError) return { error: 'Erreur upload photo : ' + uploadError.message };
+
+    const { data } = supabase.storage.from('vce-auteurs-photos').getPublicUrl(path);
+    // Cache-busting : force le rafraîchissement de l'aperçu après ré-upload (même chemin)
+    finalPhotoUrl = `${data.publicUrl}?v=${Date.now()}`;
+  }
+
   const { error } = await supabase
     .from('vce_auteurs')
-    .update({ bio_courte, bio, photo_url, slug, updated_at: new Date().toISOString() })
+    .update({
+      bio_courte,
+      bio,
+      photo_url: finalPhotoUrl,
+      slug,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', auteurId);
 
   if (error) {

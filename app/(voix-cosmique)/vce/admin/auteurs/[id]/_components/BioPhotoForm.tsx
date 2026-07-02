@@ -113,8 +113,37 @@ export default function BioPhotoForm({ auteurId, bioCourte, bio, photoUrl, slug,
       </div>
 
       <div style={{ marginBottom: '1rem' }}>
-        <label style={labelStyle}>URL de la photo</label>
-        <input type="text" name="photo_url" defaultValue={photoUrl ?? ''} style={inputStyle} placeholder="https://..." />
+        <label style={labelStyle}>Photo de profil (JPG, PNG, WebP — max 2 Mo)</label>
+
+        {/* Aperçu de la photo actuelle */}
+        {photoUrl && (
+          <img
+            src={photoUrl}
+            alt="Photo actuelle"
+            style={{
+              width: '96px',
+              height: '96px',
+              borderRadius: '50%',
+              objectFit: 'cover',
+              border: '2px solid var(--carte-bordure)',
+              display: 'block',
+              marginBottom: '0.6rem',
+            }}
+          />
+        )}
+
+        {/* Fallback : conserve l'URL existante si aucun fichier n'est envoyé */}
+        <input type="hidden" name="photo_url_actuelle" value={photoUrl ?? ''} />
+
+        <input
+          type="file"
+          name="photo_file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          style={{ fontFamily: 'var(--font-inter)', fontSize: '0.82rem', color: 'var(--texte)' }}
+        />
+        <p style={{ fontFamily: 'var(--font-inter)', fontSize: '0.7rem', color: 'var(--accent-or-texte)', margin: '0.3rem 0 0' }}>
+          Laisse vide pour conserver la photo actuelle.
+        </p>
       </div>
 
       <div style={{ marginBottom: '1.25rem' }}>
