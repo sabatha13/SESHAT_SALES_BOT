@@ -20,6 +20,16 @@ export const metadata: Metadata = {
     template: '%s | Voix Cosmique Éditions',
   },
   description: 'Maison d\'édition indépendante dédiée à la littérature de l\'éveil, de la spiritualité et des arts cosmiques.',
+  openGraph: {
+    images: [
+      {
+        url: '/og-vce.png',
+        width: 1200,
+        height: 630,
+        alt: 'Voix Cosmique Éditions — Services Éditoriaux',
+      },
+    ],
+  },
 };
 
 export default function VoixCosmiqueLayout({ children }: { children: React.ReactNode }) {
