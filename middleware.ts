@@ -20,6 +20,12 @@ async function handleVCERequest(req: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  // /vce/* est déjà au bon chemin interne — fichiers de convention
+  // Next.js (opengraph-image, sitemap, robots...) générés sous vce/
+  if (pathname.startsWith('/vce')) {
+    return NextResponse.next();
+  }
+
   // Tokens rafraîchis pendant cette requête (posés sur la réponse finale, s'il y a lieu)
   let refreshedAccessToken: string | null = null;
   let refreshedRefreshToken: string | null = null;
