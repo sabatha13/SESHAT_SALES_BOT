@@ -50,8 +50,8 @@ export default function UtilisateursClient({ users }: { users: User[] }) {
         />
       </div>
 
-      <div className="card-dark rounded-2xl overflow-hidden">
-        <table className="w-full">
+      <div className="card-dark rounded-2xl overflow-x-auto">
+        <table className="w-full min-w-[640px]">
           <thead>
             <tr className="border-b border-ash/50">
               {['Utilisateur', 'Email', 'Achats', 'Statut', 'Dernière activité', 'Inscrit le'].map(h => (

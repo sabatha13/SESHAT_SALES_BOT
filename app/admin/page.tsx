@@ -176,7 +176,7 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         {cards.map(c => (
           <div key={c.label} className="card-dark p-5 rounded-2xl gold-border-hover">
             <div className="flex items-center justify-between mb-3">
@@ -230,7 +230,7 @@ export default async function AdminDashboard() {
             const max = Math.max(...revenue30.map(d => d.amount), 1);
             const hasData = revenue30.some(d => d.amount > 0);
             return hasData ? (
-              <div className="flex items-end gap-0.5 h-28">
+              <div className="flex items-end gap-0.5 h-28 mb-5">
                 {revenue30.map((d, i) => (
                   <div key={d.date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
                     <div

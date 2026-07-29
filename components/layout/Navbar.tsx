@@ -43,7 +43,7 @@ export default function Navbar() {
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-8">
+          <div className="hidden lg:flex items-center gap-8">
             <Link href="/boutique" className={cn('nav-link text-sm tracking-wide', pathname === '/boutique' && 'text-gold-400')}>
               Boutique
             </Link>
@@ -71,7 +71,7 @@ export default function Navbar() {
           </div>
 
           {/* Auth buttons */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4">
             <SignedOut>
               <Link href="/connexion" className="btn-ghost-gold px-4 py-2 rounded-lg text-sm">
                 Connexion
@@ -110,7 +110,7 @@ export default function Navbar() {
 
           {/* Mobile toggle */}
           <button
-            className="md:hidden text-silver-400 hover:text-gold-400 transition-colors"
+            className="lg:hidden p-2 text-silver-400 hover:text-gold-400 transition-colors"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Menu"
           >
@@ -121,7 +121,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-obsidian border-t border-ash/50 animate-fade-in">
+        <div className="lg:hidden bg-obsidian border-t border-ash/50 animate-fade-in">
           <div className="max-w-7xl mx-auto px-4 py-4 space-y-1">
             <Link href="/boutique" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Boutique
@@ -146,6 +146,9 @@ export default function Navbar() {
             <Link href="/contact" className="block px-4 py-3 rounded-lg text-silver-300 hover:text-gold-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
               Contact
             </Link>
+            <a href="https://chat.whatsapp.com/ClVIQUqtU4G4nwMdFqWPDB" target="_blank" rel="noopener noreferrer" className="block px-4 py-3 rounded-lg text-green-400 hover:bg-charcoal transition-all text-sm" onClick={() => setMobileOpen(false)}>
+              Club WhatsApp
+            </a>
             <div className="pt-3 border-t border-ash/50 flex flex-col gap-2">
               <SignedOut>
                 <Link href="/connexion" className="btn-ghost-gold px-4 py-2 rounded-lg text-sm text-center" onClick={() => setMobileOpen(false)}>

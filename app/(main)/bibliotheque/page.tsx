@@ -157,7 +157,7 @@ export default async function BibliothequePage() {
 
       {continueReading.length > 0 && (
         <Section title="Continuer la lecture" icon={Clock}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {continueReading.slice(0, 6).map(book => <ProgressBookCard key={book.id} book={book} />)}
           </div>
         </Section>
@@ -177,7 +177,7 @@ export default async function BibliothequePage() {
         }
       >
         {purchasedBooks.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {purchasedBooks.map(book => <PurchasedBookCard key={book.id} book={book} />)}
           </div>
         )}
@@ -186,7 +186,7 @@ export default async function BibliothequePage() {
       {hasSubscription && (
         <Section title="Inclus dans votre abonnement" icon={Crown}>
           {subscriptionBooks.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {subscriptionBooks.map(book => <SimpleBookCard key={book.id} book={book} />)}
             </div>
           ) : (
@@ -214,7 +214,7 @@ export default async function BibliothequePage() {
         empty={<p className="text-silver-500 text-sm">Aucun favori pour l'instant.</p>}
       >
         {wishlistBooks.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {wishlistBooks.map(book => (
               <Link key={book.id} href={`/livre/${book.id}`} className="card-dark rounded-2xl overflow-hidden group hover:border-gold-600/30 border border-ash/30 transition-all">
                 <div className="relative aspect-[2/3] bg-charcoal">
@@ -236,7 +236,7 @@ export default async function BibliothequePage() {
 
       {completedBooks.length > 0 && (
         <Section title="Livres terminés" icon={CheckCircle}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {completedBooks.map(book => <ProgressBookCard key={book.id} book={book} />)}
           </div>
         </Section>

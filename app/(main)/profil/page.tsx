@@ -82,12 +82,12 @@ export default async function ProfilPage() {
               </div>
               <div className="space-y-2">
                 {payments.map((p: any) => (
-                  <div key={p.id} className="flex items-center justify-between">
-                    <div>
-                      <p className="text-silver-300 text-sm">{p.status === 'external' ? 'Abonnement' : (p.book?.title || 'Achat')}</p>
+                  <div key={p.id} className="flex items-center justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-silver-300 text-sm truncate">{p.status === 'external' ? 'Abonnement' : (p.book?.title || 'Achat')}</p>
                       <p className="text-silver-600 text-xs">{formatDate(p.created_at)}{p.payment_method ? ` · ${p.payment_method}` : ''}</p>
                     </div>
-                    <span className="text-gold-400 text-sm font-medium">{formatPrice(p.amount)}</span>
+                    <span className="text-gold-400 text-sm font-medium flex-shrink-0">{formatPrice(p.amount)}</span>
                   </div>
                 ))}
               </div>

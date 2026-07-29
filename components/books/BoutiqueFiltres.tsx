@@ -71,7 +71,7 @@ export default function BoutiqueFiltres({ currentCategory, currentQuery }: Bouti
 
   return (
     <div
-      className={`sticky top-0 z-40 bg-void/95 backdrop-blur border-b border-ash/30 transition-shadow duration-300 ${
+      className={`sticky top-16 md:top-20 z-40 bg-void/95 backdrop-blur border-b border-ash/30 transition-shadow duration-300 ${
         scrolled ? 'shadow-lg shadow-black/40' : ''
       }`}
     >
@@ -96,7 +96,7 @@ export default function BoutiqueFiltres({ currentCategory, currentQuery }: Bouti
               <button
                 key={cat.name}
                 onClick={() => handleCategoryClick(cat.name)}
-                className={`px-3 py-1 rounded-full text-xs transition-all duration-200 flex items-center gap-1 ${
+                className={`px-3 py-2 rounded-full text-xs transition-all duration-200 flex items-center gap-1 ${
                   active
                     ? 'bg-gold-600 text-void font-medium shadow-gold-sm'
                     : 'border border-ash text-silver-500 hover:border-gold-600/40 hover:text-silver-300'

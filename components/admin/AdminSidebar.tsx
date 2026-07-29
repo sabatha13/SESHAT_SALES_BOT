@@ -1,8 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus, Crown, Download, Tag, Star, Feather, Megaphone, Package, FileText, Sparkles } from 'lucide-react';
+import { BookOpen, LayoutDashboard, BookMarked, Users, ShoppingBag, Plus, Crown, Download, Tag, Star, Feather, Megaphone, Package, FileText, Sparkles, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const nav = [
@@ -29,81 +30,118 @@ const vceNav = [
 ];
 
 export default function AdminSidebar() {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
+  const close = () => setMobileOpen(false);
+
   return (
-    <aside className="fixed left-0 top-0 h-full w-64 bg-obsidian border-r border-ash/50 flex flex-col z-40">
-      {/* Logo */}
-      <div className="p-6 border-b border-ash/50">
-        <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gold-gradient flex items-center justify-center">
-            <BookOpen className="w-4 h-4 text-void" />
-          </div>
-          <div>
-            <p className="font-serif text-sm gold-text font-medium">CDS Admin</p>
-            <p className="text-silver-500 text-[10px] uppercase tracking-widest">Panneau d'administration</p>
-          </div>
-        </Link>
-      </div>
+    <>
+      {/* Mobile hamburger — visible only on < md */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-obsidian border border-ash/50 text-silver-400 hover:text-gold-400 transition-colors"
+        onClick={() => setMobileOpen(true)}
+        aria-label="Ouvrir le menu admin"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
 
-      {/* Nav CDS */}
-      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {nav.map(item => {
-          const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200',
-                active
-                  ? 'bg-gold-500/10 text-gold-400 border border-gold-500/20'
-                  : 'text-silver-500 hover:text-silver-300 hover:bg-charcoal'
-              )}
-            >
-              <item.icon className={cn('w-4 h-4', active ? 'text-gold-400' : 'text-mist')} />
-              {item.label}
-            </Link>
-          );
-        })}
+      {/* Mobile overlay backdrop */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/60 z-40 animate-fade-in"
+          onClick={close}
+          aria-hidden="true"
+        />
+      )}
 
-        {/* Séparateur VCE */}
-        <div className="pt-4 pb-1">
-          <div className="px-4 mb-1 flex items-center gap-2">
-            <div className="flex-1 h-px bg-ash/40" />
-            <span className="text-[9px] uppercase tracking-widest text-silver-600 font-medium whitespace-nowrap">
-              Voix Cosmique Éd.
-            </span>
-            <div className="flex-1 h-px bg-ash/40" />
-          </div>
+      {/* Sidebar */}
+      <aside className={cn(
+        'fixed left-0 top-0 h-full w-64 bg-obsidian border-r border-ash/50 flex flex-col z-50 transition-transform duration-300',
+        mobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+      )}>
+        {/* Logo */}
+        <div className="p-6 border-b border-ash/50 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2.5" onClick={close}>
+            <div className="w-8 h-8 rounded-lg bg-gold-gradient flex items-center justify-center">
+              <BookOpen className="w-4 h-4 text-void" />
+            </div>
+            <div>
+              <p className="font-serif text-sm gold-text font-medium">CDS Admin</p>
+              <p className="text-silver-500 text-[10px] uppercase tracking-widest">Panneau d'administration</p>
+            </div>
+          </Link>
+          {/* Close button — mobile only */}
+          <button
+            className="md:hidden p-1.5 text-silver-500 hover:text-silver-300 transition-colors"
+            onClick={close}
+            aria-label="Fermer le menu"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {vceNav.map(item => {
-          const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200',
-                active
-                  ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                  : 'text-silver-500 hover:text-silver-300 hover:bg-charcoal'
-              )}
-            >
-              <item.icon className={cn('w-4 h-4', active ? 'text-amber-400' : 'text-mist')} />
-              {item.label}
-            </Link>
-          );
-        })}
-      </nav>
+        {/* Nav CDS */}
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+          {nav.map(item => {
+            const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={close}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200',
+                  active
+                    ? 'bg-gold-500/10 text-gold-400 border border-gold-500/20'
+                    : 'text-silver-500 hover:text-silver-300 hover:bg-charcoal'
+                )}
+              >
+                <item.icon className={cn('w-4 h-4', active ? 'text-gold-400' : 'text-mist')} />
+                {item.label}
+              </Link>
+            );
+          })}
 
-      {/* Back to site */}
-      <div className="p-4 border-t border-ash/50">
-        <Link href="/" className="flex items-center gap-2 px-4 py-2 text-silver-500 hover:text-silver-300 text-sm transition-colors">
-          ← Retour au site
-        </Link>
-      </div>
-    </aside>
+          {/* Séparateur VCE */}
+          <div className="pt-4 pb-1">
+            <div className="px-4 mb-1 flex items-center gap-2">
+              <div className="flex-1 h-px bg-ash/40" />
+              <span className="text-[9px] uppercase tracking-widest text-silver-600 font-medium whitespace-nowrap">
+                Voix Cosmique Éd.
+              </span>
+              <div className="flex-1 h-px bg-ash/40" />
+            </div>
+          </div>
+
+          {vceNav.map(item => {
+            const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={close}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm transition-all duration-200',
+                  active
+                    ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                    : 'text-silver-500 hover:text-silver-300 hover:bg-charcoal'
+                )}
+              >
+                <item.icon className={cn('w-4 h-4', active ? 'text-amber-400' : 'text-mist')} />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Back to site */}
+        <div className="p-4 border-t border-ash/50">
+          <Link href="/" onClick={close} className="flex items-center gap-2 px-4 py-2 text-silver-500 hover:text-silver-300 text-sm transition-colors">
+            ← Retour au site
+          </Link>
+        </div>
+      </aside>
+    </>
   );
 }

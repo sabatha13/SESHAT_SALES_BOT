@@ -133,7 +133,7 @@ export default async function LivrePage({ params }: Props) {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-12">
         {/* Cover */}
         <div className="lg:col-span-2">
-          <div className="sticky top-28">
+          <div className="sticky top-20">
             <div className="relative aspect-[2/3] rounded-2xl overflow-hidden shadow-card-hover border border-ash/50">
               {book.cover_url ? (
                 <Image src={book.cover_url} alt={book.title} fill className="object-cover" />
@@ -317,14 +317,14 @@ export default async function LivrePage({ params }: Props) {
               <div className="space-y-4">
                 {reviews.map((review: any) => (
                   <div key={review.id} className="card-dark rounded-2xl p-5">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <p className="text-silver-300 text-sm font-medium">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0 overflow-hidden">
+                        <p className="text-silver-300 text-sm font-medium truncate">
                           {review.profile?.full_name || 'Lecteur anonyme'}
                         </p>
                         <p className="text-silver-500 text-xs">{formatDate(review.created_at)}</p>
                       </div>
-                      <StarRating rating={review.rating} size="sm" />
+                      <div className="flex-shrink-0"><StarRating rating={review.rating} size="sm" /></div>
                     </div>
                     {review.comment && <p className="text-silver-400 text-sm leading-relaxed">{review.comment}</p>}
                   </div>

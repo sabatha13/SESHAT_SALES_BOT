@@ -47,17 +47,17 @@ export default function PromoBanner() {
     : '';
 
   return (
-    <div className="w-full bg-gradient-to-r from-gold-900/80 via-gold-800/60 to-gold-900/80 border-b border-gold-600/30 px-4 py-2.5 flex items-center justify-center gap-3 text-sm relative">
-      <span className="text-gold-200">✨ Offre spéciale — <strong>{discount}</strong>{expiry}</span>
+    <div className="w-full bg-gradient-to-r from-gold-900/80 via-gold-800/60 to-gold-900/80 border-b border-gold-600/30 px-4 pr-10 py-2.5 flex flex-wrap items-center justify-center gap-2 text-sm relative">
+      <span className="text-gold-200 min-w-0 text-center">✨ Offre spéciale — <strong>{discount}</strong>{expiry}</span>
       <button
         onClick={copy}
-        className="flex items-center gap-1.5 bg-gold-500/20 border border-gold-500/40 text-gold-300 hover:bg-gold-500/30 px-3 py-1 rounded-full text-xs transition-all"
+        className="flex-shrink-0 flex items-center gap-1.5 bg-gold-500/20 border border-gold-500/40 text-gold-300 hover:bg-gold-500/30 px-3 py-1 rounded-full text-xs transition-all"
       >
         {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
         <span className="font-mono font-bold">{banner.code}</span>
         {copied ? 'Copié !' : 'Copier'}
       </button>
-      <button onClick={dismiss} className="absolute right-3 text-gold-500 hover:text-gold-300 transition-colors">
+      <button onClick={dismiss} className="absolute right-3 top-1/2 -translate-y-1/2 text-gold-500 hover:text-gold-300 transition-colors p-1">
         <X className="w-4 h-4" />
       </button>
     </div>
