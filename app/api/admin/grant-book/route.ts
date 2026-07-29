@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     await assertAdmin(userId);
 
     const supabase = createServerClient();
-    const { user_id, book_id } = await req.json();
+    const { user_id, book_id, grant_type, amount, payment_method } = await req.json();
 
     const { data: existing } = await supabase
       .from('purchases')
@@ -21,11 +21,13 @@ export async function POST(req: NextRequest) {
 
     if (existing) return NextResponse.json({ error: 'Livre déjà accordé' }, { status: 400 });
 
+    const isPaid = grant_type === 'paid_external' && amount > 0;
     const { error } = await supabase.from('purchases').insert({
       user_id,
       book_id,
-      stripe_session_id: 'manual_grant_' + Date.now(),
-      amount: 0,
+      stripe_session_id: (isPaid ? 'manual_paid_' : 'manual_grant_') + Date.now(),
+      amount: isPaid ? amount : 0,
+      payment_method: isPaid ? (payment_method || 'Autre') : null,
       status: 'completed',
     });
 

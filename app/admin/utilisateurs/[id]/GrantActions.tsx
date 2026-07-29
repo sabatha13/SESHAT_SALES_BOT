@@ -20,17 +20,30 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
   const [banned, setBanned] = useState(isBanned);
   const [msg, setMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [grantType, setGrantType] = useState<'free_grant' | 'paid_external'>('paid_external');
+  const [bookGrantType, setBookGrantType] = useState<'free_grant' | 'paid_external'>('paid_external');
   const [paymentMethod, setPaymentMethod] = useState('Zelle');
   const [paidAmount, setPaidAmount] = useState('');
+  const [bookPaidAmount, setBookPaidAmount] = useState('');
+  const [bookPaymentMethod, setBookPaymentMethod] = useState('Cash');
   const [loadingPayment, setLoadingPayment] = useState(false);
 
   async function grantBook() {
     if (!selectedBook) return;
+    if (bookGrantType === 'paid_external' && (!bookPaidAmount || parseFloat(bookPaidAmount) <= 0)) {
+      setMsg({ type: 'error', text: 'Veuillez entrer le montant reçu.' });
+      return;
+    }
     setLoadingBook(true); setMsg(null);
     const res = await fetch('/api/admin/grant-book', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, book_id: selectedBook }),
+      body: JSON.stringify({
+        user_id: userId,
+        book_id: selectedBook,
+        grant_type: bookGrantType,
+        amount: bookGrantType === 'paid_external' ? Math.round(parseFloat(bookPaidAmount) * 100) : 0,
+        payment_method: bookGrantType === 'paid_external' ? bookPaymentMethod : null,
+      }),
     });
     const data = await res.json();
     setMsg(res.ok ? { type: 'success', text: 'Livre accordé !' } : { type: 'error', text: data.error });
@@ -161,12 +174,47 @@ export default function GrantActions({ userId, books, ownedBooks, hasSubscriptio
       <div className="card-dark p-5 rounded-xl space-y-3">
         <div className="flex items-center gap-2 text-silver-300 text-sm font-medium">
           <BookOpen className="w-4 h-4 text-gold-500" />
-          Accorder un livre gratuitement
+          Accorder un livre
         </div>
+
         <select value={selectedBook} onChange={e => setSelectedBook(e.target.value)} className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm">
           <option value="">Choisir un livre...</option>
           {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
         </select>
+
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setBookGrantType('paid_external')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${bookGrantType === 'paid_external' ? 'bg-emerald-500/20 border-emerald-500/50 text-emerald-400' : 'border-ash/40 text-silver-500 hover:border-ash'}`}>
+            <DollarSign className="w-3.5 h-3.5" /> Payé hors-site
+          </button>
+          <button type="button" onClick={() => setBookGrantType('free_grant')}
+            className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm border transition-all ${bookGrantType === 'free_grant' ? 'bg-blue-500/20 border-blue-500/50 text-blue-400' : 'border-ash/40 text-silver-500 hover:border-ash'}`}>
+            <Gift className="w-3.5 h-3.5" /> Gratuit
+          </button>
+        </div>
+
+        {bookGrantType === 'paid_external' && (
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1">Montant ($US)</label>
+              <input type="number" min="0" step="0.01" value={bookPaidAmount} onChange={e => setBookPaidAmount(e.target.value)} placeholder="9.99"
+                className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50" />
+            </div>
+            <div>
+              <label className="text-silver-500 text-xs uppercase tracking-wide block mb-1">Méthode</label>
+              <select value={bookPaymentMethod} onChange={e => setBookPaymentMethod(e.target.value)}
+                className="w-full bg-charcoal border border-ash/50 rounded-lg px-3 py-2 text-silver-300 text-sm focus:outline-none focus:border-gold-600/50">
+                <option>Cash</option>
+                <option>Zelle</option>
+                <option>Virement</option>
+                <option>PayPal</option>
+                <option>CashApp</option>
+                <option>Autre</option>
+              </select>
+            </div>
+          </div>
+        )}
+
         <button onClick={grantBook} disabled={!selectedBook || loadingBook} className="btn-gold px-4 py-2 rounded-lg text-sm disabled:opacity-50">
           {loadingBook ? 'En cours...' : 'Accorder ce livre'}
         </button>
