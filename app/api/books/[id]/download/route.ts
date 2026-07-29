@@ -63,6 +63,5 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   if (!tokenRow) return NextResponse.json({ error: 'Erreur creation token' }, { status: 500 });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  return NextResponse.json({ url: `${appUrl}/api/download?token=${tokenRow.token}` });
+  return NextResponse.json({ url: `/api/download?token=${tokenRow.token}` });
 }
