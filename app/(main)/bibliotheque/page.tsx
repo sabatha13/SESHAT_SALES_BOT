@@ -8,6 +8,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { Book } from '@/lib/types';
 import { BookOpen, ShoppingBag, Heart, Crown, CheckCircle, Clock } from 'lucide-react';
 import EmptyState from '@/components/ui/EmptyState';
+import PurchasedBookCard from './PurchasedBookCard';
 
 interface BookWithProgress extends Book {
   current_page?: number;
@@ -177,7 +178,7 @@ export default async function BibliothequePage() {
       >
         {purchasedBooks.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-            {purchasedBooks.map(book => <SimpleBookCard key={book.id} book={book} />)}
+            {purchasedBooks.map(book => <PurchasedBookCard key={book.id} book={book} />)}
           </div>
         )}
       </Section>

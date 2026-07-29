@@ -10,15 +10,19 @@ export default function DownloadButton({ bookId }: { bookId: string }) {
   const handleDownload = async () => {
     setLoading(true);
     setError('');
+    // Ouvrir la fenêtre immédiatement (contexte clic direct) pour passer les popup blockers
+    const win = window.open('', '_blank');
     try {
       const res = await fetch(`/api/books/${bookId}/download`, { method: 'POST' });
       const data = await res.json();
-      if (data.url) {
-        window.open(data.url, '_blank');
+      if (data.url && win) {
+        win.location.href = data.url;
       } else {
+        win?.close();
         setError(data.error || 'Erreur telechargement');
       }
     } catch {
+      win?.close();
       setError('Erreur reseau');
     } finally {
       setLoading(false);

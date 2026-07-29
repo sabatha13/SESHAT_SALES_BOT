@@ -35,10 +35,10 @@ export async function GET(req: NextRequest) {
     user_agent: req.headers.get('user-agent') || 'unknown',
   });
 
-  // Generate signed URL (15 min)
+  // Generate signed URL (15 min) — download:true force le Content-Disposition: attachment
   const { data: signedData } = await supabase.storage
     .from('pdfs')
-    .createSignedUrl(book.pdf_path, 900);
+    .createSignedUrl(book.pdf_path, 900, { download: true });
 
   if (!signedData?.signedUrl) {
     return NextResponse.json({ error: 'Erreur génération URL' }, { status: 500 });
