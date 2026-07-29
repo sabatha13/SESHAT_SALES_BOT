@@ -3,7 +3,7 @@ import { createServerClient } from '@/lib/supabase/server';
 import { clerkClient } from '@clerk/nextjs/server';
 import { formatDate, formatPrice } from '@/lib/utils';
 import Link from 'next/link';
-import { ArrowLeft, BookOpen, ShieldCheck, Ban, Star, Download, Clock, Heart } from 'lucide-react';
+import { ArrowLeft, BookOpen, ShieldCheck, Ban, Star, Download, Clock, Heart, Eye } from 'lucide-react';
 import GrantActions from './GrantActions';
 
 export const dynamic = 'force-dynamic';
@@ -156,7 +156,7 @@ export default async function UserDetailPage({ params }: { params: { id: string 
           <h1 className="font-serif text-3xl text-silver-200">{user.full_name || 'Utilisateur'}</h1>
           <p className="text-silver-500 text-sm">{user.email}</p>
         </div>
-        <div className="flex items-center gap-2 ml-auto">
+        <div className="flex items-center gap-2 ml-auto flex-wrap">
           {user.is_banned && (
             <span className="flex items-center gap-1 text-red-400 text-xs border border-red-500/30 px-2 py-1 rounded-full">
               <Ban className="w-3 h-3" /> Suspendu
@@ -167,6 +167,12 @@ export default async function UserDetailPage({ params }: { params: { id: string 
               <ShieldCheck className="w-3 h-3" /> Admin
             </span>
           )}
+          <Link
+            href={`/admin/utilisateurs/${params.id}/vue`}
+            className="flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border border-amber-500/40 text-amber-400 hover:bg-amber-500/10 transition-colors"
+          >
+            <Eye className="w-3 h-3" /> Voir comme utilisateur
+          </Link>
         </div>
       </div>
 
