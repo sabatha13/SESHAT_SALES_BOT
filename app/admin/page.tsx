@@ -1,362 +1,362 @@
 export const dynamic = 'force-dynamic';
 
 import { createServerClient } from '@/lib/supabase/server';
-import { formatPrice, formatDate } from '@/lib/utils';
-import { BookMarked, Users, ShoppingBag, TrendingUp, BookOpen, UserPlus, Eye, Star, Crown } from 'lucide-react';
-
-async function getStats() {
-  const supabase = createServerClient();
-  const [books, users, purchases, sessions] = await Promise.all([
-    supabase.from('books').select('id', { count: 'exact' }).eq('is_published', true),
-    supabase.from('profiles').select('id', { count: 'exact' }),
-    supabase.from('purchases').select('amount, status').in('status', ['completed', 'external']),
-    supabase.from('reader_sessions').select('id', { count: 'exact' }),
-  ]);
-  const revenue = (purchases.data || []).reduce((sum, p) => sum + p.amount, 0);
-  return {
-    books: books.count || 0,
-    users: users.count || 0,
-    sales: (purchases.data || []).filter(p => p.status === 'completed').length,
-    revenue,
-    reads: sessions.count || 0,
-  };
-}
-
-async function getRecentSales() {
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from('purchases')
-    .select('*, profiles(email, full_name), books(title)')
-    .eq('status', 'completed')
-    .order('created_at', { ascending: false })
-    .limit(5);
-  return data || [];
-}
-
-async function getNewUsersLast7Days() {
-  const supabase = createServerClient();
-  const since = new Date();
-  since.setDate(since.getDate() - 6);
-  since.setHours(0, 0, 0, 0);
-  const { data } = await supabase
-    .from('profiles')
-    .select('created_at')
-    .gte('created_at', since.toISOString())
-    .order('created_at', { ascending: true });
-
-  const days: Record<string, number> = {};
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-    days[key] = 0;
-  }
-  (data || []).forEach(u => {
-    const d = new Date(u.created_at);
-    const key = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' });
-    if (key in days) days[key]++;
-  });
-  return Object.entries(days).map(([day, count]) => ({ day, count }));
-}
-
-async function getTopBooks() {
-  const supabase = createServerClient();
-  const [{ data: sessions }, { data: purchases }] = await Promise.all([
-    supabase.from('reader_sessions').select('book_id, book:books(title)'),
-    supabase.from('purchases').select('book_id, book:books(title)').eq('status', 'completed'),
-  ]);
-
-  const reads: Record<string, { title: string; reads: number; sales: number }> = {};
-  (sessions || []).forEach((s: any) => {
-    if (!s.book_id) return;
-    if (!reads[s.book_id]) reads[s.book_id] = { title: s.book?.title || 'Inconnu', reads: 0, sales: 0 };
-    reads[s.book_id].reads++;
-  });
-  (purchases || []).forEach((p: any) => {
-    if (!p.book_id) return;
-    if (!reads[p.book_id]) reads[p.book_id] = { title: p.book?.title || 'Inconnu', reads: 0, sales: 0 };
-    else if (reads[p.book_id].title === 'Inconnu' && p.book?.title) reads[p.book_id].title = p.book.title;
-    reads[p.book_id].sales++;
-  });
-  return Object.values(reads).sort((a, b) => b.reads - a.reads).slice(0, 5);
-}
-
-async function getRevenueLast30Days() {
-  const supabase = createServerClient();
-  const since = new Date();
-  since.setDate(since.getDate() - 29);
-  since.setHours(0, 0, 0, 0);
-
-  const { data } = await supabase
-    .from('purchases')
-    .select('amount, created_at')
-    .in('status', ['completed', 'external'])
-    .gte('created_at', since.toISOString())
-    .order('created_at', { ascending: true });
-
-  const days: Record<string, number> = {};
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date();
-    d.setDate(d.getDate() - i);
-    const key = d.toISOString().split('T')[0];
-    days[key] = 0;
-  }
-  (data || []).forEach(p => {
-    const key = new Date(p.created_at).toISOString().split('T')[0];
-    if (key in days) days[key] += p.amount;
-  });
-  return Object.entries(days).map(([date, amount]) => ({
-    date,
-    label: new Date(date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }),
-    amount,
-  }));
-}
-
-async function getSubscriptionStats() {
-  const supabase = createServerClient();
-
-  const now = new Date();
-  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-
-  const [activeSubs, manualSubs, externalPayments] = await Promise.all([
-    supabase.from('subscriptions').select('id, plan_id, subscription_plans(price_cents, interval)').eq('status', 'active'),
-    supabase.from('subscriptions').select('id').eq('status', 'active').is('plan_id', null),
-    supabase.from('purchases').select('amount').eq('status', 'external').gte('created_at', startOfMonth),
-  ]);
-
-  const subs = activeSubs.data || [];
-  const manualCount = manualSubs.data?.length || 0;
-  const stripeCount = subs.filter(s => s.plan_id).length;
-
-  let mrr = 0;
-  subs.forEach((s: any) => {
-    const plan = s.subscription_plans;
-    if (!plan) return;
-    mrr += plan.interval === 'month' ? plan.price_cents : Math.round(plan.price_cents / 12);
-  });
-
-  // Add external payments this month as MRR contribution
-  const externalMrr = (externalPayments.data || []).reduce((sum, p) => sum + p.amount, 0);
-  mrr += externalMrr;
-
-  return { total: subs.length, stripeCount, manualCount, mrr };
-}
-
-async function getRecentUsers() {
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from('profiles')
-    .select('full_name, email, created_at')
-    .order('created_at', { ascending: false })
-    .limit(5);
-  return data || [];
-}
+import ExecutiveDashboard, { type ExecutiveData } from './ExecutiveDashboard';
 
 export default async function AdminDashboard() {
-  const [stats, recentSales, newUsers, topBooks, recentUsers, revenue30, subStats] = await Promise.all([
-    getStats(), getRecentSales(), getNewUsersLast7Days(), getTopBooks(), getRecentUsers(),
-    getRevenueLast30Days(), getSubscriptionStats(),
+  const supabase = createServerClient();
+
+  const [purchasesRes, profilesRes, booksRes, sessionsRes, eventsRes] = await Promise.all([
+    supabase
+      .from('purchases')
+      .select('id, user_id, book_id, amount, status, recovery_email_count, created_at'),
+    supabase
+      .from('profiles')
+      .select('id, email, full_name, created_at')
+      .eq('is_admin', false),
+    supabase
+      .from('books')
+      .select('id, title, author, cover_url, is_published'),
+    supabase
+      .from('reader_sessions')
+      .select('book_id, user_id'),
+    supabase
+      .from('purchase_events')
+      .select('id, event_type, purchase_id, user_id, created_at, new_status')
+      .order('created_at', { ascending: false })
+      .limit(100),
   ]);
 
-  const maxNewUsers = Math.max(...newUsers.map(d => d.count), 1);
+  const purchases: any[] = purchasesRes.data ?? [];
+  const profiles:  any[] = profilesRes.data  ?? [];
+  const books:     any[] = booksRes.data     ?? [];
+  const sessions:  any[] = sessionsRes.data  ?? [];
+  const events:    any[] = eventsRes.data    ?? [];
 
-  const cards = [
-    { label: 'Livres publiés', value: stats.books, icon: BookMarked, color: 'text-blue-400' },
-    { label: 'Utilisateurs', value: stats.users, icon: Users, color: 'text-purple-400' },
-    { label: 'Ventes', value: stats.sales, icon: ShoppingBag, color: 'text-emerald-400' },
-    { label: 'Revenus', value: formatPrice(stats.revenue), icon: TrendingUp, color: 'text-gold-400' },
-    { label: 'Sessions lecture', value: stats.reads, icon: BookOpen, color: 'text-cyan-400' },
-  ];
+  // ── Date boundaries (UTC) ──────────────────────────────────────────
+  const now      = new Date();
+  const msDay    = 86400000;
+  const todayUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+  const tomorrow = new Date(todayUTC.getTime() + msDay);
+  const yesterday= new Date(todayUTC.getTime() - msDay);
+  const w7start  = new Date(todayUTC.getTime() - 6 * msDay);
+  const wPrev7   = new Date(w7start.getTime() - 7 * msDay);
+  const m0       = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const mPrev0   = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  const y0       = new Date(Date.UTC(now.getUTCFullYear(), 0, 1));
+  const yPrev0   = new Date(Date.UTC(now.getUTCFullYear() - 1, 0, 1));
+  const d30      = new Date(now.getTime() - 30 * msDay);
+  const d60      = new Date(now.getTime() - 60 * msDay);
 
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="font-serif text-3xl text-silver-200 mb-1">Tableau de bord</h1>
-        <p className="text-silver-500 text-sm">Vue d'ensemble de votre librairie</p>
-      </div>
+  // ── Helpers ────────────────────────────────────────────────────────
+  function inRange(p: any, from: Date, to: Date) {
+    const d = new Date(p.created_at);
+    return d >= from && d < to;
+  }
+  function revenueIn(ps: any[], from: Date, to: Date) {
+    return ps.filter(p => inRange(p, from, to)).reduce((s, p) => s + (p.amount ?? 0), 0);
+  }
+  function countIn(ps: any[], from: Date, to: Date) {
+    return ps.filter(p => inRange(p, from, to)).length;
+  }
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-        {cards.map(c => (
-          <div key={c.label} className="card-dark p-5 rounded-2xl gold-border-hover">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-silver-500 text-xs uppercase tracking-wide">{c.label}</p>
-              <c.icon className={`w-4 h-4 ${c.color}`} />
-            </div>
-            <p className="text-2xl font-semibold text-silver-200">{c.value}</p>
-          </div>
-        ))}
-      </div>
+  // ── Segments ───────────────────────────────────────────────────────
+  const completed    = purchases.filter(p => p.status === 'completed' || p.status === 'external');
+  const pending      = purchases.filter(p => p.status === 'pending');
+  const refunded     = purchases.filter(p => p.status === 'refunded');
+  const withRecovery = purchases.filter(p => (p.recovery_email_count ?? 0) > 0);
+  const recovered    = withRecovery.filter(p => p.status === 'completed' || p.status === 'external');
 
-      {/* Subscription stats + Revenue chart */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  // ── KPIs : Revenus ─────────────────────────────────────────────────
+  const revenueToday     = revenueIn(completed, todayUTC, tomorrow);
+  const revenueTodayPrev = revenueIn(completed, yesterday, todayUTC);
+  const revenueWeek      = revenueIn(completed, w7start,  tomorrow);
+  const revenueWeekPrev  = revenueIn(completed, wPrev7,   w7start);
+  const revenueMonth     = revenueIn(completed, m0,       now);
+  const revenueMonthPrev = revenueIn(completed, mPrev0,   m0);
+  const revenueYear      = revenueIn(completed, y0,       now);
+  const revenueYearPrev  = revenueIn(completed, yPrev0,   y0);
 
-        {/* Subscription stats */}
-        <div className="card-dark rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <Crown className="w-4 h-4 text-purple-400" />
-            <h2 className="font-serif text-lg text-gold-300">Abonnements actifs</h2>
-          </div>
-          <p className="text-4xl font-semibold text-silver-200 mb-1">{subStats.total}</p>
-          <p className="text-silver-500 text-sm mb-5">abonné{subStats.total !== 1 ? 's' : ''} actif{subStats.total !== 1 ? 's' : ''}</p>
-          <div className="space-y-2 border-t border-ash/30 pt-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-silver-500">Via Stripe</span>
-              <span className="text-silver-300">{subStats.stripeCount}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-silver-500">Manuels</span>
-              <span className="text-silver-300">{subStats.manualCount}</span>
-            </div>
-            <div className="flex justify-between text-sm border-t border-ash/30 pt-2 mt-2">
-              <span className="text-silver-400 font-medium">MRR estimé <span className="text-silver-600 text-xs font-normal">(mois en cours)</span></span>
-              <span className="text-gold-400 font-semibold">{formatPrice(subStats.mrr)}</span>
-            </div>
-          </div>
-        </div>
+  // ── KPIs : Ventes ──────────────────────────────────────────────────
+  const ordersToday     = countIn(completed, todayUTC, tomorrow);
+  const ordersTodayPrev = countIn(completed, yesterday, todayUTC);
 
-        {/* Revenue last 30 days */}
-        <div className="card-dark rounded-2xl p-6 lg:col-span-2">
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-gold-400" />
-              <h2 className="font-serif text-lg text-gold-300">Revenus (30 jours)</h2>
-            </div>
-            <span className="text-gold-400 font-semibold text-sm">
-              {formatPrice(revenue30.reduce((s, d) => s + d.amount, 0))}
-            </span>
-          </div>
-          {(() => {
-            const max = Math.max(...revenue30.map(d => d.amount), 1);
-            const hasData = revenue30.some(d => d.amount > 0);
-            return hasData ? (
-              <div className="flex items-end gap-0.5 h-28 mb-5">
-                {revenue30.map((d, i) => (
-                  <div key={d.date} className="flex-1 flex flex-col items-center gap-0.5 group relative">
-                    <div
-                      className="w-full rounded-t-sm bg-gold-500/40 border-t-2 border-gold-400 transition-all group-hover:bg-gold-500/60"
-                      style={{ height: `${Math.max((d.amount / max) * 100, d.amount > 0 ? 8 : 2)}%` }}
-                    />
-                    {i % 5 === 0 && (
-                      <span className="text-silver-600 text-[9px] absolute -bottom-4">{d.label}</span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="h-28 flex items-center justify-center text-silver-500 text-sm">
-                Aucun revenu sur les 30 derniers jours.
-              </div>
-            );
-          })()}
-        </div>
-      </div>
+  const completedMonth     = completed.filter(p => inRange(p, m0, now));
+  const completedMonthPrev = completed.filter(p => inRange(p, mPrev0, m0));
+  const avgOrderValue      = completedMonth.length > 0
+    ? Math.round(revenueMonth / completedMonth.length) : 0;
+  const avgOrderValuePrev  = completedMonthPrev.length > 0
+    ? Math.round(revenueMonthPrev / completedMonthPrev.length) : 0;
 
-      {/* Charts row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  const withRecovMonth  = withRecovery.filter(p => inRange(p, m0, now));
+  const recoveredMonth  = withRecovMonth.filter(p => p.status === 'completed' || p.status === 'external');
+  const recoveryRate    = withRecovMonth.length > 0 ? Math.round(recoveredMonth.length / withRecovMonth.length * 100) : 0;
+  const withRecovPrev   = withRecovery.filter(p => inRange(p, mPrev0, m0));
+  const recoveredPrev   = withRecovPrev.filter(p => p.status === 'completed' || p.status === 'external');
+  const recoveryRatePrev= withRecovPrev.length > 0 ? Math.round(recoveredPrev.length / withRecovPrev.length * 100) : 0;
 
-        {/* New users last 7 days */}
-        <div className="card-dark rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <UserPlus className="w-4 h-4 text-purple-400" />
-            <h2 className="font-serif text-lg text-gold-300">Nouveaux inscrits (7 jours)</h2>
-          </div>
-          <div className="flex items-end gap-2 h-32">
-            {newUsers.map(({ day, count }) => (
-              <div key={day} className="flex-1 flex flex-col items-center gap-1">
-                <span className="text-silver-400 text-xs">{count > 0 ? count : ''}</span>
-                <div
-                  className="w-full rounded-t-sm bg-purple-500/40 border-t-2 border-purple-400 transition-all"
-                  style={{ height: `${Math.max((count / maxNewUsers) * 100, 4)}%` }}
-                />
-                <span className="text-silver-600 text-[10px] text-center leading-tight">{day}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+  const finMonth        = completedMonth.length + refunded.filter(p => inRange(p, m0, now)).length;
+  const refMonth        = refunded.filter(p => inRange(p, m0, now)).length;
+  const refundRateMonth = finMonth > 0 ? Math.round(refMonth / finMonth * 100) : 0;
+  const finPrev         = completedMonthPrev.length + refunded.filter(p => inRange(p, mPrev0, m0)).length;
+  const refPrev         = refunded.filter(p => inRange(p, mPrev0, m0)).length;
+  const refundRatePrev  = finPrev > 0 ? Math.round(refPrev / finPrev * 100) : 0;
 
-        {/* Top books */}
-        <div className="card-dark rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <Star className="w-4 h-4 text-gold-400" />
-            <h2 className="font-serif text-lg text-gold-300">Top livres</h2>
-          </div>
-          {topBooks.length === 0 ? (
-            <p className="text-silver-500 text-sm">Aucune donnée de lecture.</p>
-          ) : (
-            <div className="space-y-3">
-              {topBooks.map((b, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <span className="text-gold-600 font-serif text-sm w-4">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-silver-300 text-sm truncate">{b.title}</p>
-                    <div className="flex items-center gap-3 mt-0.5">
-                      <span className="text-cyan-400 text-xs flex items-center gap-1">
-                        <Eye className="w-3 h-3" />{b.reads} lecture{b.reads !== 1 ? 's' : ''}
-                      </span>
-                      <span className="text-emerald-400 text-xs flex items-center gap-1">
-                        <ShoppingBag className="w-3 h-3" />{b.sales} vente{b.sales !== 1 ? 's' : ''}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+  // ── KPIs : Clients ─────────────────────────────────────────────────
+  const totalCustomers    = profiles.length;
+  const newCustomers30d   = profiles.filter(p => new Date(p.created_at) >= d30).length;
+  const newCustomersPrev  = profiles.filter(p => {
+    const d = new Date(p.created_at);
+    return d >= d60 && d < d30;
+  }).length;
 
-      {/* Bottom row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  const activeUserIds30   = new Set(completed.filter(p => new Date(p.created_at) >= d30).map(p => p.user_id));
+  const activeUserIdsPrev = new Set(completed.filter(p => {
+    const d = new Date(p.created_at);
+    return d >= d60 && d < d30;
+  }).map(p => p.user_id));
 
-        {/* Recent sales */}
-        <div className="card-dark rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <ShoppingBag className="w-4 h-4 text-emerald-400" />
-            <h2 className="font-serif text-lg text-gold-300">Ventes récentes</h2>
-          </div>
-          {recentSales.length === 0 ? (
-            <p className="text-silver-500 text-sm">Aucune vente pour le moment.</p>
-          ) : (
-            <div className="space-y-3">
-              {recentSales.map((sale: any) => (
-                <div key={sale.id} className="flex items-center justify-between py-2 border-b border-ash/30 last:border-0">
-                  <div>
-                    <p className="text-silver-300 text-sm">{sale.books?.title}</p>
-                    <p className="text-silver-500 text-xs">{sale.profiles?.email}</p>
-                  </div>
-                  <span className={`text-sm font-medium ${sale.amount === 0 ? 'text-silver-500' : 'text-gold-400'}`}>
-                    {sale.amount === 0 ? 'Gratuit' : formatPrice(sale.amount)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+  const ltvByUser: Record<string, number> = {};
+  const booksCountByUser: Record<string, Set<string>> = {};
+  completed.forEach(p => {
+    ltvByUser[p.user_id] = (ltvByUser[p.user_id] ?? 0) + (p.amount ?? 0);
+    if (!booksCountByUser[p.user_id]) booksCountByUser[p.user_id] = new Set();
+    booksCountByUser[p.user_id].add(p.book_id);
+  });
+  const vipCustomers = profiles.filter(p =>
+    (ltvByUser[p.id] ?? 0) >= 20000 || (booksCountByUser[p.id]?.size ?? 0) >= 3
+  ).length;
 
-        {/* Recent signups */}
-        <div className="card-dark rounded-2xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <UserPlus className="w-4 h-4 text-purple-400" />
-            <h2 className="font-serif text-lg text-gold-300">Derniers inscrits</h2>
-          </div>
-          {recentUsers.length === 0 ? (
-            <p className="text-silver-500 text-sm">Aucun utilisateur.</p>
-          ) : (
-            <div className="space-y-3">
-              {recentUsers.map((u: any, i: number) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-ash/30 last:border-0">
-                  <div>
-                    <p className="text-silver-300 text-sm">{u.full_name || 'Sans nom'}</p>
-                    <p className="text-silver-500 text-xs">{u.email}</p>
-                  </div>
-                  <span className="text-silver-600 text-xs">{formatDate(u.created_at)}</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
+  // ── Chart data ─────────────────────────────────────────────────────
+  const dailyChart = Array.from({ length: 90 }, (_, i) => {
+    const from = new Date(todayUTC.getTime() - (89 - i) * msDay);
+    const to   = new Date(from.getTime() + msDay);
+    return {
+      date:    from.toISOString().slice(0, 10),
+      revenue: revenueIn(completed, from, to) / 100,
+      orders:  countIn(completed, from, to),
+    };
+  });
+
+  const monthlyChart = Array.from({ length: 12 }, (_, i) => {
+    const mStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 11 + i, 1));
+    const mEnd   = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 10 + i, 1));
+    return {
+      date:    mStart.toISOString().slice(0, 7),
+      revenue: revenueIn(completed, mStart, mEnd) / 100,
+      orders:  countIn(completed, mStart, mEnd),
+    };
+  });
+
+  // ── Lookup indexes ─────────────────────────────────────────────────
+  const purchasesById: Record<string, any> = {};
+  purchases.forEach(p => { purchasesById[p.id] = p; });
+  const profilesById: Record<string, any> = {};
+  profiles.forEach(p => { profilesById[p.id] = p; });
+  const booksById: Record<string, any> = {};
+  books.forEach(b => { booksById[b.id] = b; });
+
+  // ── Top 10 Livres ──────────────────────────────────────────────────
+  const bookStat: Record<string, { revenue: number; sales: number; pending: number; refunded: number; recentSales: number; prevRecentSales: number }> = {};
+  purchases.forEach(p => {
+    if (!bookStat[p.book_id]) bookStat[p.book_id] = { revenue: 0, sales: 0, pending: 0, refunded: 0, recentSales: 0, prevRecentSales: 0 };
+    const bs = bookStat[p.book_id];
+    const d  = new Date(p.created_at);
+    if (p.status === 'completed' || p.status === 'external') {
+      bs.revenue += p.amount ?? 0;
+      bs.sales++;
+      if (d >= d30) bs.recentSales++;
+      if (d >= d60 && d < d30) bs.prevRecentSales++;
+    }
+    if (p.status === 'pending')  bs.pending++;
+    if (p.status === 'refunded') bs.refunded++;
+  });
+
+  const sessionsByBook: Record<string, number> = {};
+  sessions.forEach(s => { sessionsByBook[s.book_id] = (sessionsByBook[s.book_id] ?? 0) + 1; });
+
+  const totalRevenue = completed.reduce((s, p) => s + (p.amount ?? 0), 0);
+
+  const topBooks = books
+    .map(b => {
+      const bs    = bookStat[b.id] ?? { revenue: 0, sales: 0, pending: 0, refunded: 0, recentSales: 0, prevRecentSales: 0 };
+      const total = bs.sales + bs.pending + bs.refunded;
+      const conv  = total > 0 ? Math.round(bs.sales / total * 100) : 0;
+      const trend: 'up' | 'flat' | 'down' =
+        bs.recentSales > bs.prevRecentSales ? 'up' :
+        bs.recentSales < bs.prevRecentSales ? 'down' : 'flat';
+      return {
+        id: b.id, title: b.title, author: b.author ?? '',
+        cover_url: b.cover_url ?? null,
+        revenue: bs.revenue, sales: bs.sales,
+        readers: sessionsByBook[b.id] ?? 0,
+        conversionRate: conv, trend,
+        contributionPct: totalRevenue > 0 ? Math.round(bs.revenue / totalRevenue * 100) : 0,
+      };
+    })
+    .filter(b => b.sales > 0)
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 10);
+
+  // ── Livres à surveiller ────────────────────────────────────────────
+  const attentionBooks = books
+    .filter(b => b.is_published)
+    .map(b => {
+      const bs    = bookStat[b.id] ?? { revenue: 0, sales: 0, pending: 0, refunded: 0, recentSales: 0, prevRecentSales: 0 };
+      const total = bs.sales + bs.pending + bs.refunded;
+      let severity: 'critical' | 'warning' | 'healthy' = 'healthy';
+      let reason = '';
+      if (bs.sales === 0) {
+        severity = 'critical'; reason = 'Aucune vente depuis la publication';
+      } else if (total > 0 && bs.refunded / total > 0.15) {
+        severity = 'critical'; reason = `Taux de remboursement : ${Math.round(bs.refunded / total * 100)}%`;
+      } else if (total > 0 && bs.pending / total > 0.5) {
+        severity = 'warning'; reason = `${Math.round(bs.pending / total * 100)}% des commandes en attente`;
+      } else if (bs.recentSales === 0) {
+        severity = 'warning'; reason = 'Aucune vente ces 30 derniers jours';
+      }
+      return { id: b.id, title: b.title, severity, reason };
+    })
+    .filter(b => b.severity !== 'healthy')
+    .sort((a, b) => (a.severity === 'critical' ? 0 : 1) - (b.severity === 'critical' ? 0 : 1))
+    .slice(0, 8);
+
+  // ── Customer Highlights ────────────────────────────────────────────
+  const customerStats = profiles.map(p => {
+    const up   = purchases.filter(pur => pur.user_id === p.id);
+    const comp = up.filter(pur => pur.status === 'completed' || pur.status === 'external');
+    const ltv  = comp.reduce((s: number, pur: any) => s + (pur.amount ?? 0), 0);
+    const wr   = up.filter(pur => (pur.recovery_email_count ?? 0) > 0);
+    const wasRecovered = wr.some(pur => pur.status === 'completed' || pur.status === 'external');
+    return { user_id: p.id, name: p.full_name ?? '—', email: p.email ?? '—', created_at: p.created_at, ltv, orders: comp.length, wasRecovered };
+  });
+
+  const byLtv    = [...customerStats].sort((a, b) => b.ltv    - a.ltv);
+  const byOrders = [...customerStats].sort((a, b) => b.orders - a.orders);
+  const byNewest = [...customerStats].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+  const recC     = customerStats.filter(c => c.wasRecovered).sort((a, b) => b.ltv - a.ltv);
+
+  const highlights = {
+    topCustomer:    byLtv[0]    ? { user_id: byLtv[0].user_id,    name: byLtv[0].name,    email: byLtv[0].email,    ltv: byLtv[0].ltv }    : null,
+    newestCustomer: byNewest[0] ? { user_id: byNewest[0].user_id, name: byNewest[0].name, email: byNewest[0].email, created_at: byNewest[0].created_at } : null,
+    mostActive:     byOrders[0] ? { user_id: byOrders[0].user_id, name: byOrders[0].name, email: byOrders[0].email, orders: byOrders[0].orders } : null,
+    recovered:      recC[0]     ? { user_id: recC[0].user_id,     name: recC[0].name,     email: recC[0].email,     ltv: recC[0].ltv }     : null,
+  };
+
+  // ── Bilan financier ────────────────────────────────────────────────
+  const grossRevenue   = completed.reduce((s, p) => s + (p.amount ?? 0), 0);
+  const refundsTotal   = refunded.reduce((s, p) => s + (p.amount ?? 0), 0);
+  const netRevenue     = grossRevenue - refundsTotal;
+  const allAov         = completed.length > 0 ? Math.round(grossRevenue / completed.length) : 0;
+  const avgCustomerLtv = profiles.length > 0 ? Math.round(grossRevenue / profiles.length) : 0;
+
+  // ── Marketing ─────────────────────────────────────────────────────
+  const recoveryEmailsSent  = purchases.reduce((s, p) => s + (p.recovery_email_count ?? 0), 0);
+  const recoverySuccessRate = withRecovery.length > 0 ? Math.round(recovered.length / withRecovery.length * 100) : 0;
+  const estimatedLostRevenue= pending.reduce((s, p) => s + (p.amount ?? 0), 0);
+
+  // ── Activité ──────────────────────────────────────────────────────
+  const activityFeed = events.slice(0, 25).map(ev => {
+    const purch = ev.purchase_id ? (purchasesById[ev.purchase_id] ?? null) : null;
+    const user  = ev.user_id     ? (profilesById[ev.user_id]     ?? null) : null;
+    const book  = purch?.book_id ? (booksById[purch.book_id]     ?? null) : null;
+    return {
+      id:         ev.id         as string,
+      event_type: ev.event_type as string,
+      created_at: ev.created_at as string,
+      user_name:  (user?.full_name ?? null) as string | null,
+      book_title: (book?.title     ?? null) as string | null,
+      amount:     (purch?.amount   ?? null) as number | null,
+      new_status: (ev.new_status   ?? null) as string | null,
+    };
+  });
+
+  // ── Analyse exécutive (règles déterministes) ───────────────────────
+  const insights: { type: 'positive' | 'warning' | 'neutral'; text: string }[] = [];
+
+  if (revenueMonthPrev > 0) {
+    const pct = Math.round((revenueMonth - revenueMonthPrev) / revenueMonthPrev * 100);
+    if (pct >= 10)  insights.push({ type: 'positive', text: `Revenus en hausse de ${pct}% ce mois vs le mois précédent.` });
+    if (pct <= -10) insights.push({ type: 'warning',  text: `Revenus en baisse de ${Math.abs(pct)}% ce mois vs le mois précédent.` });
+  }
+  if (topBooks[0] && grossRevenue > 0) {
+    const share = Math.round(topBooks[0].revenue / grossRevenue * 100);
+    if (share >= 25) insights.push({ type: 'neutral', text: `"${topBooks[0].title}" génère ${share}% du revenu total — concentration à surveiller.` });
+  }
+  if (recoveryEmailsSent > 0 && recoverySuccessRate >= 15) {
+    insights.push({ type: 'positive', text: `Relances efficaces : ${recoverySuccessRate}% des relances se convertissent.` });
+  } else if (recoveryEmailsSent > 5 && recoverySuccessRate < 5) {
+    insights.push({ type: 'warning', text: `Relances peu efficaces : seulement ${recoverySuccessRate}% de conversion.` });
+  }
+  const booksNoSales30d = books.filter(b => b.is_published && (bookStat[b.id]?.recentSales ?? 0) === 0).length;
+  if (booksNoSales30d > 0) {
+    insights.push({ type: 'warning', text: `${booksNoSales30d} livre${booksNoSales30d > 1 ? 's' : ''} publié${booksNoSales30d > 1 ? 's' : ''} sans vente ces 30 derniers jours.` });
+  }
+  if (pending.length > 5) {
+    insights.push({ type: 'warning', text: `${pending.length} commandes en attente — relancer les acheteurs concernés.` });
+  }
+  if (vipCustomers > 0 && totalCustomers > 0) {
+    insights.push({ type: 'positive', text: `${vipCustomers} client${vipCustomers > 1 ? 's' : ''} VIP représentent ${Math.round(vipCustomers / totalCustomers * 100)}% de la base.` });
+  }
+  if (activeUserIds30.size > 0 && totalCustomers > 0) {
+    const rate = Math.round(activeUserIds30.size / totalCustomers * 100);
+    if (rate >= 20) insights.push({ type: 'positive', text: `${rate}% des clients ont acheté ces 30 derniers jours — engagement fort.` });
+  }
+  if (insights.length === 0) {
+    insights.push({ type: 'neutral', text: 'Pas encore assez de données pour générer des insights automatiques.' });
+  }
+
+  // ── Alertes ────────────────────────────────────────────────────────
+  const alerts: { severity: 'critical' | 'warning' | 'healthy'; title: string; message: string }[] = [];
+
+  if (ordersToday === 0 && now.getUTCHours() >= 12) {
+    alerts.push({ severity: 'critical', title: "Aucune vente aujourd'hui", message: 'Zéro transaction complétée depuis minuit UTC.' });
+  }
+  if (refundRateMonth >= 15) {
+    alerts.push({ severity: 'critical', title: 'Taux de remboursement élevé', message: `${refundRateMonth}% des ventes ce mois ont été remboursées (seuil : 15%).` });
+  }
+  if (pending.length >= 10) {
+    alerts.push({ severity: 'warning', title: `${pending.length} commandes en attente`, message: 'Volume inhabituel — vérifier les paiements Stripe.' });
+  }
+  if (revenueMonthPrev > 0 && revenueMonth < revenueMonthPrev * 0.75) {
+    alerts.push({ severity: 'warning', title: 'Revenus en baisse significative', message: 'Revenus ce mois inférieurs de plus de 25% au mois précédent.' });
+  }
+  if (alerts.length === 0) {
+    alerts.push({ severity: 'healthy', title: 'Tous les indicateurs sont normaux', message: 'Aucune anomalie détectée.' });
+  }
+
+  const execData: ExecutiveData = {
+    kpis: {
+      revenueToday,     revenueTodayPrev,
+      revenueWeek,      revenueWeekPrev,
+      revenueMonth,     revenueMonthPrev,
+      revenueYear,      revenueYearPrev,
+      ordersToday,      ordersTodayPrev,
+      avgOrderValue,    avgOrderValuePrev,
+      recoveryRate,     recoveryRatePrev,
+      refundRate: refundRateMonth, refundRatePrev,
+      totalCustomers,
+      newCustomers30d,  newCustomersPrev,
+      activeCustomers30d: activeUserIds30.size, activeCustomersPrev: activeUserIdsPrev.size,
+      vipCustomers,
+    },
+    dailyChart,
+    monthlyChart,
+    topBooks,
+    attentionBooks,
+    highlights,
+    financial: { grossRevenue, refundsTotal, netRevenue, avgOrderValue: allAov, avgCustomerLtv },
+    marketing: {
+      recoveryEmailsSent,
+      recoveredOrders:     recovered.length,
+      recoverySuccessRate,
+      pendingOrders:       pending.length,
+      estimatedLostRevenue,
+    },
+    activityFeed,
+    insights,
+    alerts,
+  };
+
+  return <ExecutiveDashboard data={execData} />;
 }
