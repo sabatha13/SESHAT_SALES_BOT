@@ -9,7 +9,9 @@ export type EventType =
   | 'external_grant'
   | 'book_granted'
   | 'download_requested'
-  | 'download_completed';
+  | 'download_completed'
+  | 'recovery_email_sent'
+  | 'recovery_tracking_failed';
 
 export type EventSource =
   | 'checkout'

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { formatPrice, formatDate } from '@/lib/utils';
-import { Trash2, AlertCircle, Check, Download, RotateCcw, Search } from 'lucide-react';
+import { Trash2, AlertCircle, Check, Download, RotateCcw, Search, Mail, X } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 const statusLabels: Record<string, { label: string; color: string }> = {
@@ -23,6 +23,26 @@ const FILTERS = [
   { key: 'pending', label: 'En attente' },
 ];
 
+interface RecoveryData {
+  id: string;
+  book_id: string;
+  email: string;
+  full_name: string;
+  title: string;
+  created_at: string;
+  last_recovery_email_sent_at: string | null;
+  first_recovery_email_sent_at: string | null;
+  recovery_email_count: number;
+}
+
+function formatLastReminder(date: string | null | undefined): string {
+  if (!date) return 'Jamais';
+  const diffDays = Math.floor((Date.now() - new Date(date).getTime()) / (1000 * 60 * 60 * 24));
+  if (diffDays === 0) return "Aujourd'hui";
+  if (diffDays === 1) return 'Hier';
+  return `${diffDays} jours`;
+}
+
 export default function VentesClient({ sales: initialSales }: { sales: any[] }) {
   const [sales, setSales] = useState(initialSales);
   const [loading, setLoading] = useState('');
@@ -31,6 +51,10 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
   const [search, setSearch] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  // Recovery email modal
+  const [recoveryModal, setRecoveryModal] = useState<RecoveryData | null>(null);
+  const [recoverySending, setRecoverySending] = useState(false);
 
   const completed = sales.filter(s => s.status === 'completed' || s.status === 'external');
   const totalRevenue = completed.reduce((sum, s) => sum + s.amount, 0);
@@ -149,6 +173,38 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
     setLoading('');
   }
 
+  async function sendRecovery() {
+    if (!recoveryModal) return;
+    setRecoverySending(true);
+    const res = await fetch('/api/admin/send-recovery-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ purchase_id: recoveryModal.id }),
+    });
+    setRecoverySending(false);
+    setRecoveryModal(null);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.warning === 'tracking_update_failed') {
+        setMsg({ type: 'error', text: 'Email envoyé, mais le suivi n\'a pas pu être mis à jour.' });
+      } else {
+        setMsg({ type: 'success', text: 'Email de relance envoyé avec succès.' });
+      }
+    } else if (res.status === 429) {
+      setMsg({ type: 'error', text: 'Un rappel a déjà été envoyé dans les dernières 24 heures.' });
+    } else {
+      setMsg({ type: 'error', text: 'Impossible d\'envoyer l\'email.' });
+    }
+  }
+
+  // First name: first word of full_name
+  const recoveryFirstName = recoveryModal
+    ? (recoveryModal.full_name || '').split(' ')[0] || recoveryModal.full_name || 'cher client'
+    : '';
+  const recoveryBookUrl = recoveryModal
+    ? `https://cdslibrairie.com/livre/${recoveryModal.book_id}?utm_source=recovery_email`
+    : '';
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -167,7 +223,6 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
               {loading === 'all' ? 'Suppression...' : `Supprimer les ${pendingCount} en attente`}
             </button>
           )}
-          {/* Total revenue — bigger */}
           <div className="card-dark px-6 py-3 rounded-xl text-right border border-gold-600/20">
             <p className="text-silver-500 text-xs uppercase tracking-widest mb-1">Revenus totaux</p>
             <p className="text-3xl font-serif gold-text">{formatPrice(totalRevenue)}</p>
@@ -292,6 +347,26 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
                   <td className="px-4 py-3 text-silver-500 text-xs">{formatDate(sale.created_at)}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
+                      {/* Recovery email — pending only */}
+                      {sale.status === 'pending' && (
+                        <button
+                          onClick={() => setRecoveryModal({
+                            id: sale.id,
+                            book_id: sale.book_id,
+                            email: sale.profiles?.email || '',
+                            full_name: sale.profiles?.full_name || '',
+                            title: sale.books?.title || '—',
+                            created_at: sale.created_at,
+                            last_recovery_email_sent_at: sale.last_recovery_email_sent_at ?? null,
+                            first_recovery_email_sent_at: sale.first_recovery_email_sent_at ?? null,
+                            recovery_email_count: sale.recovery_email_count ?? 0,
+                          })}
+                          title="Envoyer un rappel"
+                          className="text-blue-400 hover:text-blue-300 transition-colors"
+                        >
+                          <Mail className="w-4 h-4" />
+                        </button>
+                      )}
                       {sale.status === 'completed' && (
                         <button onClick={() => refundSale(sale.id)} disabled={loading === `refund-${sale.id}`} title="Rembourser" className="text-yellow-400 hover:text-yellow-300 transition-colors disabled:opacity-50">
                           <RotateCcw className="w-4 h-4" />
@@ -318,6 +393,106 @@ export default function VentesClient({ sales: initialSales }: { sales: any[] }) 
           <p className="text-silver-600 text-xs">{filteredSales.length} transaction{filteredSales.length !== 1 ? 's' : ''} affichée{filteredSales.length !== 1 ? 's' : ''}</p>
         </div>
       </div>
+
+      {/* ── RECOVERY EMAIL MODAL ─────────────────────────────── */}
+      {recoveryModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+          <div className="bg-[#1c1c1c] border border-ash/30 rounded-2xl p-6 max-w-lg w-full shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-silver-100 font-medium flex items-center gap-2">
+                <Mail className="w-4 h-4 text-blue-400" />
+                Envoyer un rappel d'achat
+              </h3>
+              <button onClick={() => setRecoveryModal(null)} className="text-silver-500 hover:text-silver-300 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Purchase details */}
+            <div className="bg-charcoal/50 rounded-xl divide-y divide-ash/20 text-sm">
+              {([
+                ['Client', recoveryModal.full_name || '—'],
+                ['Livre', recoveryModal.title],
+                ['Email', recoveryModal.email],
+                ['Statut', 'En attente'],
+                ["Date d'achat", formatDate(recoveryModal.created_at)],
+              ] as [string, string][]).map(([label, value]) => (
+                <div key={label} className="flex justify-between items-center px-4 py-2.5 gap-4">
+                  <span className="text-silver-500 shrink-0">{label}</span>
+                  <span className="text-silver-200 text-right break-all">{value}</span>
+                </div>
+              ))}
+              {/* Recovery tracking — muted secondary */}
+              <div className="flex justify-between items-center px-4 py-2.5 gap-4">
+                <span className="text-silver-600 shrink-0 text-xs">Nombre de rappels</span>
+                <span className="text-silver-600 text-right text-xs">
+                  {recoveryModal.recovery_email_count === 0
+                    ? 'Aucun'
+                    : `${recoveryModal.recovery_email_count} envoyé${recoveryModal.recovery_email_count > 1 ? 's' : ''}`}
+                </span>
+              </div>
+              <div className="flex justify-between items-center px-4 py-2.5 gap-4">
+                <span className="text-silver-600 shrink-0 text-xs">Premier rappel</span>
+                <span className="text-silver-600 text-right text-xs">
+                  {formatLastReminder(recoveryModal.first_recovery_email_sent_at)}
+                </span>
+              </div>
+              <div className="flex justify-between items-center px-4 py-2.5 gap-4">
+                <span className="text-silver-600 shrink-0 text-xs">Dernier rappel</span>
+                <span className="text-silver-600 text-right text-xs">
+                  {formatLastReminder(recoveryModal.last_recovery_email_sent_at)}
+                </span>
+              </div>
+            </div>
+
+            {/* Email preview */}
+            <div>
+              <p className="text-silver-500 text-xs uppercase tracking-widest mb-2">Aperçu de l'email</p>
+              <div className="bg-charcoal/30 border border-ash/20 rounded-xl p-4 space-y-2 font-mono text-xs text-silver-400 leading-relaxed">
+                <p>
+                  <span className="text-silver-500">Sujet :</span>{' '}
+                  <span className="text-silver-200">Votre livre vous attend</span>
+                </p>
+                <div className="border-t border-ash/20 pt-3 space-y-2">
+                  <p>Bonjour <span className="text-silver-200">{recoveryFirstName}</span>,</p>
+                  <p>Nous avons remarqué que votre commande pour :</p>
+                  <p className="text-silver-200 font-semibold bg-charcoal/50 px-3 py-1.5 rounded-lg">
+                    {recoveryModal.title}
+                  </p>
+                  <p>n'a pas pu être finalisée.</p>
+                  <p>Vous pouvez terminer votre achat ici :</p>
+                  <p className="text-blue-400 break-all underline">{recoveryBookUrl}</p>
+                  <p>Si vous rencontrez un problème, répondez simplement à cet email.</p>
+                  <p>Merci,<br /><span className="text-silver-300">CDS Librairie</span></p>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setRecoveryModal(null)}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm border border-ash/40 text-silver-400 hover:border-ash/70 hover:text-silver-300 transition-all"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={sendRecovery}
+                disabled={recoverySending}
+                className="flex-1 px-4 py-2.5 rounded-xl text-sm font-medium bg-blue-500/20 border border-blue-500/50 text-blue-400 hover:bg-blue-500/30 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {recoverySending
+                  ? 'Envoi en cours…'
+                  : <><Mail className="w-3.5 h-3.5" /> Envoyer l'email</>
+                }
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ── END RECOVERY EMAIL MODAL ─────────────────────────── */}
     </div>
   );
 }
