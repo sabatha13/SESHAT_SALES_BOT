@@ -3,15 +3,16 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { ShoppingCart, Loader2, BookOpen } from 'lucide-react';
+import { ShoppingCart, Loader2, BookOpen, RefreshCw } from 'lucide-react';
 
 interface PurchaseButtonProps {
   bookId: string;
   price: number;
   owned: boolean;
+  hasPendingPurchase?: boolean;
 }
 
-export default function PurchaseButton({ bookId, price, owned }: PurchaseButtonProps) {
+export default function PurchaseButton({ bookId, price, owned, hasPendingPurchase = false }: PurchaseButtonProps) {
   const [loading, setLoading] = useState(false);
   const { isSignedIn } = useUser();
   const router = useRouter();
@@ -33,6 +34,8 @@ export default function PurchaseButton({ bookId, price, owned }: PurchaseButtonP
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+      } else if (data.redirect) {
+        router.push(data.redirect);
       } else {
         throw new Error(data.error || 'Erreur lors du paiement');
       }
@@ -63,10 +66,12 @@ export default function PurchaseButton({ bookId, price, owned }: PurchaseButtonP
     >
       {loading ? (
         <Loader2 className="w-4 h-4 animate-spin" />
+      ) : hasPendingPurchase ? (
+        <RefreshCw className="w-4 h-4" />
       ) : (
         <ShoppingCart className="w-4 h-4" />
       )}
-      {loading ? 'Redirection…' : 'Acheter maintenant'}
+      {loading ? 'Redirection…' : hasPendingPurchase ? 'Reprendre le paiement' : 'Acheter maintenant'}
     </button>
   );
 }

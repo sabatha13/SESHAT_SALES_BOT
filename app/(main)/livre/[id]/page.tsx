@@ -49,18 +49,20 @@ async function getReviews(bookId: string) {
 async function getUserData(clerkUserId: string, bookId: string) {
   const supabase = createServerClient();
   const { data: profile } = await supabase.from('profiles').select('id').eq('clerk_user_id', clerkUserId).single();
-  if (!profile) return { owned: false, hasSubscription: false, inWishlist: false };
+  if (!profile) return { owned: false, hasSubscription: false, inWishlist: false, hasPendingPurchase: false };
 
-  const [purchaseRes, subRes, wishlistRes] = await Promise.all([
-    supabase.from('purchases').select('id').eq('user_id', profile.id).eq('book_id', bookId).eq('status', 'completed').single(),
+  const [purchaseRes, subRes, wishlistRes, pendingRes] = await Promise.all([
+    supabase.from('purchases').select('id').eq('user_id', profile.id).eq('book_id', bookId).in('status', ['completed', 'external']).maybeSingle(),
     supabase.from('subscriptions').select('id').eq('user_id', profile.id).eq('status', 'active').single(),
     supabase.from('wishlist').select('id').eq('user_id', profile.id).eq('book_id', bookId).single(),
+    supabase.from('purchases').select('id').eq('user_id', profile.id).eq('book_id', bookId).eq('status', 'pending').maybeSingle(),
   ]);
 
   return {
     owned: !!purchaseRes.data,
     hasSubscription: !!subRes.data,
     inWishlist: !!wishlistRes.data,
+    hasPendingPurchase: !!pendingRes.data,
   };
 }
 
@@ -105,7 +107,7 @@ export default async function LivrePage({ params }: Props) {
 
   const { userId } = await auth();
   const [userData, reviews, coPurchasedBooks] = await Promise.all([
-    userId ? getUserData(userId, book.id) : Promise.resolve({ owned: false, hasSubscription: false, inWishlist: false }),
+    userId ? getUserData(userId, book.id) : Promise.resolve({ owned: false, hasSubscription: false, inWishlist: false, hasPendingPurchase: false }),
     getReviews(book.id),
     getCoPurchasedBooks(book.id, 4),
   ]);
@@ -115,7 +117,7 @@ export default async function LivrePage({ params }: Props) {
   // De-dupe: similar books exclude anything already shown in the co-purchase section.
   const similarBooks = await getSimilarBooks(book, coPurchased.map(b => b.id), 4);
 
-  const { owned, hasSubscription, inWishlist } = userData;
+  const { owned, hasSubscription, inWishlist, hasPendingPurchase } = userData;
   const canReadViaSubscription = hasSubscription && (book.subscription_included || book.access_type === 'subscription_only' || book.access_type === 'purchase_and_subscription');
   const avgRating = reviews.length > 0
     ? reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length
@@ -186,7 +188,7 @@ export default async function LivrePage({ params }: Props) {
                 <div className="space-y-2">
                   <ViewerCounter bookId={book.id} />
                   {book.access_type !== 'subscription_only' && (
-                    <PurchaseButton bookId={book.id} price={book.price} owned={false} />
+                    <PurchaseButton bookId={book.id} price={book.price} owned={false} hasPendingPurchase={hasPendingPurchase} />
                   )}
                   {(book.subscription_included || book.access_type === 'subscription_only' || book.access_type === 'purchase_and_subscription') && !owned && (
                     <Link href="/abonnement" className="btn-ghost-gold w-full py-2.5 flex items-center justify-center gap-2 text-sm">

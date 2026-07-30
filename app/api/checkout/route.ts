@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!book.price || book.price <= 0) {
-      return NextResponse.json({ error: 'Prix du livre non configuré. Contactez l\'administrateur.' }, { status: 400 });
+      return NextResponse.json({ error: "Prix du livre non configuré. Contactez l'administrateur." }, { status: 400 });
     }
 
     const user = await currentUser();
@@ -51,18 +51,62 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Profil introuvable' }, { status: 500 });
     }
 
-    const { data: existing } = await supabase
+    // Already paid — short-circuit
+    const { data: completedPurchase } = await supabase
       .from('purchases')
       .select('id')
       .eq('user_id', profile.id)
       .eq('book_id', bookId)
-      .eq('status', 'completed')
-      .single();
+      .in('status', ['completed', 'external'])
+      .maybeSingle();
 
-    if (existing) {
+    if (completedPurchase) {
       return NextResponse.json({ error: 'Déjà acheté', redirect: `/lecture/${bookId}` }, { status: 409 });
     }
 
+    // Look for an existing pending/expired row (UNIQUE(user_id, book_id) means at most one)
+    const { data: existingRow } = await supabase
+      .from('purchases')
+      .select('id, stripe_session_id, status')
+      .eq('user_id', profile.id)
+      .eq('book_id', bookId)
+      .in('status', ['pending', 'expired'])
+      .maybeSingle();
+
+    // If there's a pending row, validate the Stripe session before creating a new one
+    if (existingRow?.status === 'pending' && existingRow.stripe_session_id) {
+      const stripeSession = await stripe.checkout.sessions.retrieve(existingRow.stripe_session_id);
+
+      if (stripeSession.status === 'open') {
+        // Session still live — send user straight to it
+        return NextResponse.json({ url: stripeSession.url });
+      }
+
+      if (stripeSession.status === 'complete') {
+        if (stripeSession.payment_status !== 'paid') {
+          // Session closed but payment not confirmed (async method still processing).
+          // Do not grant access. Do not create a new session.
+          return NextResponse.json(
+            { error: 'Votre paiement est en cours de traitement. Vous recevrez un email de confirmation.' },
+            { status: 402 }
+          );
+        }
+        // Webhook was missed and payment is confirmed — recover now
+        await supabase
+          .from('purchases')
+          .update({
+            status: 'completed',
+            stripe_payment_intent: stripeSession.payment_intent as string,
+          })
+          .eq('id', existingRow.id);
+        return NextResponse.json({ redirect: `/lecture/${bookId}` });
+      }
+
+      // Stripe session expired — mark row accordingly, then fall through to create a new session
+      await supabase.from('purchases').update({ status: 'expired' }).eq('id', existingRow.id);
+    }
+
+    // Create a fresh Stripe Checkout session
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
     const session = await stripe.checkout.sessions.create({
@@ -91,13 +135,21 @@ export async function POST(req: NextRequest) {
       cancel_url: `${appUrl}/livre/${book.id}`,
     });
 
-    await supabase.from('purchases').insert({
-      user_id: profile.id,
-      book_id: book.id,
-      stripe_session_id: session.id,
-      amount: book.price,
-      status: 'pending',
-    });
+    if (existingRow) {
+      // Reuse the existing row — update stripe_session_id and reset to pending
+      await supabase
+        .from('purchases')
+        .update({ stripe_session_id: session.id, status: 'pending', amount: book.price })
+        .eq('id', existingRow.id);
+    } else {
+      await supabase.from('purchases').insert({
+        user_id: profile.id,
+        book_id: book.id,
+        stripe_session_id: session.id,
+        amount: book.price,
+        status: 'pending',
+      });
+    }
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {
