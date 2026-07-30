@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { createServerClient } from '@/lib/supabase/server';
-import BookForm from '@/components/admin/BookForm';
+import BookDetailTabs from './BookDetailTabs';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,12 +15,12 @@ export default async function EditLivrePage({ params }: Props) {
   if (!book) notFound();
 
   return (
-    <div className="space-y-6 max-w-3xl">
+    <div className="space-y-6 max-w-6xl">
       <div>
         <h1 className="font-serif text-3xl text-silver-200 mb-1">Modifier le livre</h1>
         <p className="text-silver-500 text-sm font-serif italic">{book.title}</p>
       </div>
-      <BookForm book={book} />
+      <BookDetailTabs book={book} />
     </div>
   );
 }
