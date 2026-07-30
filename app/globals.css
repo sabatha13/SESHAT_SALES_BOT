@@ -131,6 +131,11 @@
     @apply w-24 h-px mx-auto;
     background: linear-gradient(90deg, transparent, #D4AF37, transparent);
   }
+
+  .input-dark {
+    @apply w-full bg-charcoal border border-ash/50 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-gold-600/50 transition-colors;
+    color: #E2E2E5;
+  }
 }
 
 @layer utilities {

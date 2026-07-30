@@ -11,7 +11,9 @@ export type EventType =
   | 'download_requested'
   | 'download_completed'
   | 'recovery_email_sent'
-  | 'recovery_tracking_failed';
+  | 'recovery_tracking_failed'
+  | 'newsletter_sent'
+  | 'coupon_applied';
 
 export type EventSource =
   | 'checkout'
@@ -32,6 +34,7 @@ export interface PurchaseEventInput {
   stripe_payment_intent?: string;
   previous_status?: string;
   new_status?: string;
+  campaign_run_id?: string;
   metadata?: Record<string, unknown>;
 }
 

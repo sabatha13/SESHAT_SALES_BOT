@@ -27,9 +27,12 @@ module.exports = {
           900: '#5E490E',
         },
         silver: {
+          100: '#F5F5F7',
+          200: '#E2E2E5',
           300: '#C8C8CC',
           400: '#ADADB3',
           500: '#8E8E95',
+          600: '#6E6E76',
         },
       },
       fontFamily: {
