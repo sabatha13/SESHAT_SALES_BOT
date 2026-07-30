@@ -6,9 +6,17 @@ export const dynamic = 'force-dynamic';
 export default async function AdminLivresPage() {
   const supabase = createServerClient();
 
-  const [{ data: books }, { data: sessions }] = await Promise.all([
-    supabase.from('books').select('id, title, author, category, price, is_published, created_at').order('created_at', { ascending: false }),
+  const [
+    { data: books },
+    { data: sessions },
+    { data: purchases },
+  ] = await Promise.all([
+    supabase
+      .from('books')
+      .select('id, title, author, category, price, is_published, created_at, cover_url')
+      .order('created_at', { ascending: false }),
     supabase.from('reader_sessions').select('book_id'),
+    supabase.from('purchases').select('amount').in('status', ['completed', 'external']),
   ]);
 
   const readCounts: Record<string, number> = {};
@@ -21,5 +29,7 @@ export default async function AdminLivresPage() {
     read_count: readCounts[b.id] || 0,
   }));
 
-  return <BooksClient books={enriched} />;
+  const totalRevenue = (purchases || []).reduce((sum, p: any) => sum + (p.amount || 0), 0);
+
+  return <BooksClient books={enriched} totalRevenue={totalRevenue} />;
 }
