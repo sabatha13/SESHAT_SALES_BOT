@@ -55,10 +55,31 @@ export async function POST(req: NextRequest) {
             }
           }
         } else {
-          await supabase
-            .from('purchases')
-            .update({ status: 'completed', stripe_payment_intent: session.payment_intent as string })
-            .eq('stripe_session_id', session.id);
+          // SELECT and UPDATE run in parallel; SELECT result feeds the audit record only.
+          const [{ data: purchaseRow }, { error: updateError }] = await Promise.all([
+            supabase.from('purchases')
+              .select('id, user_id, book_id')
+              .eq('stripe_session_id', session.id)
+              .maybeSingle(),
+            supabase.from('purchases')
+              .update({ status: 'completed', stripe_payment_intent: session.payment_intent as string })
+              .eq('stripe_session_id', session.id),
+          ]);
+          if (updateError) console.error('Webhook purchase update failed:', updateError.message);
+          if (purchaseRow) {
+            const { error: auditError } = await supabase.from('purchase_audit').insert({
+              purchase_id: purchaseRow.id,
+              user_id: purchaseRow.user_id,
+              book_id: purchaseRow.book_id,
+              stripe_session_id: session.id,
+              stripe_payment_intent: session.payment_intent as string,
+              previous_status: 'pending',
+              new_status: 'completed',
+              recovery_source: 'webhook',
+              performed_by: 'system',
+            });
+            if (auditError) console.error('Webhook audit insert failed:', auditError.message);
+          }
         }
       }
       if (session.mode === 'subscription' && session.subscription) {

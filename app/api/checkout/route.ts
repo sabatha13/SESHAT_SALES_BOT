@@ -91,19 +91,33 @@ export async function POST(req: NextRequest) {
             { status: 402 }
           );
         }
-        // Webhook was missed and payment is confirmed — recover now
-        await supabase
-          .from('purchases')
-          .update({
+        // Webhook was missed and payment is confirmed — recover now.
+        // Purchase update + audit run in parallel; audit failure never blocks access.
+        const [, { error: auditError }] = await Promise.all([
+          supabase.from('purchases').update({
             status: 'completed',
             stripe_payment_intent: stripeSession.payment_intent as string,
-          })
-          .eq('id', existingRow.id);
+          }).eq('id', existingRow.id),
+          supabase.from('purchase_audit').insert({
+            purchase_id: existingRow.id,
+            user_id: profile.id,
+            book_id: bookId,
+            stripe_session_id: existingRow.stripe_session_id,
+            stripe_payment_intent: stripeSession.payment_intent as string,
+            previous_status: 'pending',
+            new_status: 'completed',
+            recovery_source: 'checkout_recovery',
+            performed_by: 'system',
+          }),
+        ]);
+        if (auditError) console.error('Checkout recovery audit failed:', auditError.message);
         return NextResponse.json({ redirect: `/lecture/${bookId}` });
       }
 
-      // Stripe session expired — mark row accordingly, then fall through to create a new session
-      await supabase.from('purchases').update({ status: 'expired' }).eq('id', existingRow.id);
+      // Stripe session expired — timestamp the expiration, then fall through to create a new session
+      await supabase.from('purchases')
+        .update({ status: 'expired', expired_at: new Date().toISOString() })
+        .eq('id', existingRow.id);
     }
 
     // Create a fresh Stripe Checkout session
@@ -136,10 +150,10 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingRow) {
-      // Reuse the existing row — update stripe_session_id and reset to pending
+      // Reuse the existing row — update stripe_session_id, reset to pending, clear expired_at
       await supabase
         .from('purchases')
-        .update({ stripe_session_id: session.id, status: 'pending', amount: book.price })
+        .update({ stripe_session_id: session.id, status: 'pending', amount: book.price, expired_at: null })
         .eq('id', existingRow.id);
     } else {
       await supabase.from('purchases').insert({
