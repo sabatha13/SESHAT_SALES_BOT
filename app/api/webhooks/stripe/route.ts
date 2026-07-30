@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe } from '@/lib/stripe/client';
 import { createServerClient } from '@/lib/supabase/server';
+import { logPurchaseEvent } from '@/lib/purchase-events';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -67,7 +68,9 @@ export async function POST(req: NextRequest) {
           ]);
           if (updateError) console.error('Webhook purchase update failed:', updateError.message);
           if (purchaseRow) {
-            const { error: auditError } = await supabase.from('purchase_audit').insert({
+            await logPurchaseEvent({
+              event_type: 'payment_completed',
+              event_source: 'webhook',
               purchase_id: purchaseRow.id,
               user_id: purchaseRow.user_id,
               book_id: purchaseRow.book_id,
@@ -75,10 +78,8 @@ export async function POST(req: NextRequest) {
               stripe_payment_intent: session.payment_intent as string,
               previous_status: 'pending',
               new_status: 'completed',
-              recovery_source: 'webhook',
-              performed_by: 'system',
+              metadata: { stripe_event_id: event.id },
             });
-            if (auditError) console.error('Webhook audit insert failed:', auditError.message);
           }
         }
       }
@@ -107,10 +108,28 @@ export async function POST(req: NextRequest) {
     case 'charge.refunded': {
       const charge = event.data.object as Stripe.Charge;
       if (charge.payment_intent) {
-        await supabase
-          .from('purchases')
-          .update({ status: 'refunded' })
-          .eq('stripe_payment_intent', charge.payment_intent as string);
+        const [{ data: purchaseRow }] = await Promise.all([
+          supabase.from('purchases')
+            .select('id, user_id, book_id')
+            .eq('stripe_payment_intent', charge.payment_intent as string)
+            .maybeSingle(),
+          supabase.from('purchases')
+            .update({ status: 'refunded' })
+            .eq('stripe_payment_intent', charge.payment_intent as string),
+        ]);
+        if (purchaseRow) {
+          await logPurchaseEvent({
+            event_type: 'payment_refunded',
+            event_source: 'webhook',
+            purchase_id: purchaseRow.id,
+            user_id: purchaseRow.user_id,
+            book_id: purchaseRow.book_id,
+            stripe_payment_intent: charge.payment_intent as string,
+            previous_status: 'completed',
+            new_status: 'refunded',
+            metadata: { stripe_event_id: event.id },
+          });
+        }
       }
       break;
     }

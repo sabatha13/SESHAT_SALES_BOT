@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth, currentUser } from '@clerk/nextjs/server';
 import { stripe } from '@/lib/stripe/client';
 import { createServerClient } from '@/lib/supabase/server';
+import { logPurchaseEvent } from '@/lib/purchase-events';
 
 export async function POST(req: NextRequest) {
   try {
@@ -78,7 +79,15 @@ export async function POST(req: NextRequest) {
       const stripeSession = await stripe.checkout.sessions.retrieve(existingRow.stripe_session_id);
 
       if (stripeSession.status === 'open') {
-        // Session still live — send user straight to it
+        // Session still live — log the resume and send user straight to it
+        await logPurchaseEvent({
+          event_type: 'checkout_resumed',
+          event_source: 'checkout',
+          purchase_id: existingRow.id,
+          user_id: profile.id,
+          book_id: bookId,
+          stripe_session_id: existingRow.stripe_session_id,
+        });
         return NextResponse.json({ url: stripeSession.url });
       }
 
@@ -92,13 +101,15 @@ export async function POST(req: NextRequest) {
           );
         }
         // Webhook was missed and payment is confirmed — recover now.
-        // Purchase update + audit run in parallel; audit failure never blocks access.
-        const [, { error: auditError }] = await Promise.all([
+        // Purchase update + event log run in parallel; event failure never blocks access.
+        await Promise.all([
           supabase.from('purchases').update({
             status: 'completed',
             stripe_payment_intent: stripeSession.payment_intent as string,
           }).eq('id', existingRow.id),
-          supabase.from('purchase_audit').insert({
+          logPurchaseEvent({
+            event_type: 'payment_completed',
+            event_source: 'checkout_recovery',
             purchase_id: existingRow.id,
             user_id: profile.id,
             book_id: bookId,
@@ -106,11 +117,8 @@ export async function POST(req: NextRequest) {
             stripe_payment_intent: stripeSession.payment_intent as string,
             previous_status: 'pending',
             new_status: 'completed',
-            recovery_source: 'checkout_recovery',
-            performed_by: 'system',
           }),
         ]);
-        if (auditError) console.error('Checkout recovery audit failed:', auditError.message);
         return NextResponse.json({ redirect: `/lecture/${bookId}` });
       }
 
@@ -118,6 +126,17 @@ export async function POST(req: NextRequest) {
       await supabase.from('purchases')
         .update({ status: 'expired', expired_at: new Date().toISOString() })
         .eq('id', existingRow.id);
+
+      await logPurchaseEvent({
+        event_type: 'checkout_expired',
+        event_source: 'checkout',
+        purchase_id: existingRow.id,
+        user_id: profile.id,
+        book_id: bookId,
+        stripe_session_id: existingRow.stripe_session_id,
+        previous_status: 'pending',
+        new_status: 'expired',
+      });
     }
 
     // Create a fresh Stripe Checkout session
@@ -149,21 +168,40 @@ export async function POST(req: NextRequest) {
       cancel_url: `${appUrl}/livre/${book.id}`,
     });
 
+    let purchaseId: string | undefined;
+
     if (existingRow) {
       // Reuse the existing row — update stripe_session_id, reset to pending, clear expired_at
       await supabase
         .from('purchases')
         .update({ stripe_session_id: session.id, status: 'pending', amount: book.price, expired_at: null })
         .eq('id', existingRow.id);
+      purchaseId = existingRow.id;
     } else {
-      await supabase.from('purchases').insert({
-        user_id: profile.id,
-        book_id: book.id,
-        stripe_session_id: session.id,
-        amount: book.price,
-        status: 'pending',
-      });
+      const { data: newPurchase } = await supabase
+        .from('purchases')
+        .insert({
+          user_id: profile.id,
+          book_id: book.id,
+          stripe_session_id: session.id,
+          amount: book.price,
+          status: 'pending',
+        })
+        .select('id')
+        .single();
+      purchaseId = newPurchase?.id;
     }
+
+    await logPurchaseEvent({
+      event_type: 'checkout_created',
+      event_source: 'checkout',
+      purchase_id: purchaseId,
+      user_id: profile.id,
+      book_id: bookId,
+      stripe_session_id: session.id,
+      new_status: 'pending',
+      metadata: { amount: book.price, reused_row: !!existingRow },
+    });
 
     return NextResponse.json({ url: session.url });
   } catch (err: any) {

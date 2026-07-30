@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
+import { logPurchaseEvent } from '@/lib/purchase-events';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const { userId } = await auth();
@@ -27,6 +28,8 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   if (!book) return NextResponse.json({ error: 'Livre introuvable' }, { status: 404 });
   if (!book.download_allowed) return NextResponse.json({ error: 'Telechargement non autorise' }, { status: 403 });
 
+  let purchaseId: string | undefined;
+
   // Free preview books: allow download without purchase
   if (book.access_type !== 'free_preview') {
     const { data: purchase } = await supabase
@@ -39,6 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
     // Only users who purchased the book can download — subscription access does NOT grant download rights
     if (!purchase) return NextResponse.json({ error: 'Téléchargement réservé aux acheteurs. Les abonnés peuvent lire en ligne uniquement.' }, { status: 403 });
+    purchaseId = purchase.id;
   }
 
   // Rate-limit: max 5 downloads per day per user per book
@@ -62,6 +66,15 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     .single();
 
   if (!tokenRow) return NextResponse.json({ error: 'Erreur creation token' }, { status: 500 });
+
+  await logPurchaseEvent({
+    event_type: 'download_requested',
+    event_source: 'download',
+    purchase_id: purchaseId,
+    user_id: profile.id,
+    book_id: params.id,
+    metadata: { token: tokenRow.token },
+  });
 
   return NextResponse.json({ url: `/api/download?token=${tokenRow.token}` });
 }

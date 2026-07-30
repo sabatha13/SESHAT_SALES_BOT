@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createServerClient } from '@/lib/supabase/server';
 import { assertAdmin } from '@/lib/admin';
+import { logPurchaseEvent } from '@/lib/purchase-events';
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,16 +23,32 @@ export async function POST(req: NextRequest) {
     if (existing) return NextResponse.json({ error: 'Livre déjà accordé' }, { status: 400 });
 
     const isPaid = grant_type === 'paid_external' && amount > 0;
-    const { error } = await supabase.from('purchases').insert({
+    const { data: grantedPurchase, error } = await supabase.from('purchases').insert({
       user_id,
       book_id,
       stripe_session_id: (isPaid ? 'manual_paid_' : 'manual_grant_') + Date.now(),
       amount: isPaid ? amount : 0,
       payment_method: isPaid ? (payment_method || 'Autre') : null,
       status: 'completed',
-    });
+    }).select('id').single();
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+    await logPurchaseEvent({
+      event_type: isPaid ? 'external_grant' : 'book_granted',
+      event_source: 'admin',
+      purchase_id: grantedPurchase?.id,
+      user_id,
+      book_id,
+      new_status: 'completed',
+      metadata: {
+        grant_type,
+        amount: isPaid ? amount : 0,
+        payment_method: isPaid ? (payment_method || 'Autre') : null,
+        admin_clerk_id: userId,
+      },
+    });
+
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
