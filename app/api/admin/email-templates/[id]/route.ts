@@ -16,7 +16,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
     if (!profile?.is_admin) return NextResponse.json({ error: 'Accès refusé' }, { status: 403 });
 
     const body = await req.json();
-    const allowed = ['name', 'description', 'category', 'subject', 'html_body', 'text_body', 'variables', 'status', 'metadata'];
+    const allowed = ['name', 'description', 'category', 'subject', 'html_body', 'text_body', 'variables', 'status', 'metadata', 'builder_data'];
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     for (const key of allowed) {
       if (body[key] !== undefined) updates[key] = body[key];

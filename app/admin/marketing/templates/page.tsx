@@ -3,14 +3,15 @@ export const dynamic = 'force-dynamic';
 import { createServerClient } from '@/lib/supabase/server';
 import EmailTemplateManager from './EmailTemplateManager';
 import type { TemplateData, TemplateItem, TemplateCategory, TemplateStatus } from './EmailTemplateManager';
+import type { BookOption } from './EmailBuilderV2';
 
 export default async function EmailTemplatesPage() {
   const supabase = createServerClient();
 
-  const [templatesRes, campaignsRes, automationsRes] = await Promise.all([
+  const [templatesRes, campaignsRes, automationsRes, booksRes] = await Promise.all([
     supabase
       .from('marketing_email_templates')
-      .select('*')
+      .select('id, name, description, category, subject, html_body, text_body, variables, status, usage_count, last_used_at, created_at, updated_at, builder_data')
       .order('updated_at', { ascending: false }),
     supabase
       .from('marketing_campaigns')
@@ -20,11 +21,17 @@ export default async function EmailTemplatesPage() {
       .from('marketing_automations')
       .select('id, name, template_id')
       .not('template_id', 'is', null),
+    supabase
+      .from('books')
+      .select('id, title, author, price, cover_url')
+      .eq('is_published', true)
+      .order('title', { ascending: true }),
   ]);
 
   const templates   = (templatesRes.data   ?? []) as any[];
   const campaigns   = (campaignsRes.data   ?? []) as any[];
   const automations = (automationsRes.data ?? []) as any[];
+  const books       = (booksRes.data       ?? []) as BookOption[];
 
   const usageMap: Record<string, {
     campaigns:   { id: string; name: string }[];
@@ -48,7 +55,8 @@ export default async function EmailTemplatesPage() {
     description:       (t.description  ?? '')    as string,
     category:          t.category                as TemplateCategory,
     subject:           t.subject                 as string,
-    html_body:         t.html_body               as string,
+    html_body:         (t.html_body    ?? '')    as string,
+    builder_data:      t.builder_data            ?? null,
     text_body:         (t.text_body    ?? '')    as string,
     variables:         (t.variables    ?? [])    as string[],
     status:            t.status                  as TemplateStatus,
@@ -82,7 +90,7 @@ export default async function EmailTemplatesPage() {
           Gestionnaire de templates · {templateList.length} template{templateList.length !== 1 ? 's' : ''}
         </p>
       </div>
-      <EmailTemplateManager data={data} />
+      <EmailTemplateManager data={data} books={books} />
     </div>
   );
 }
