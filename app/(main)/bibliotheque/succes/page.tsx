@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { createServerClient } from '@/lib/supabase/server';
+import { stripe } from '@/lib/stripe/client';
+import { logPurchaseEvent } from '@/lib/purchase-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,14 +39,69 @@ export default async function SuccesPage({
   let purchase: Purchase | null = null;
 
   if (searchParams.session_id) {
-    const { data } = await supabase
+    const sessionId = searchParams.session_id;
+
+    // Look for an already-completed row first (happy path — webhook already fired)
+    const { data: completedRow } = await supabase
       .from('purchases')
-      .select('book_id, book:books(id, title, author, cover_url, category, price)')
-      .eq('stripe_session_id', searchParams.session_id)
+      .select('id, book_id, book:books(id, title, author, cover_url, category, price)')
+      .eq('stripe_session_id', sessionId)
       .eq('status', 'completed')
       .maybeSingle();
 
-    purchase = data as Purchase | null;
+    if (completedRow) {
+      purchase = completedRow as unknown as Purchase;
+    } else {
+      // Webhook may have been delayed or missed — check Stripe directly and recover
+      try {
+        const stripeSession = await stripe.checkout.sessions.retrieve(sessionId);
+
+        if (stripeSession.status === 'complete' && stripeSession.payment_status === 'paid') {
+          const { data: pendingRow } = await supabase
+            .from('purchases')
+            .select('id, user_id, book_id, book:books(id, title, author, cover_url, category, price)')
+            .eq('stripe_session_id', sessionId)
+            .eq('status', 'pending')
+            .maybeSingle();
+
+          if (pendingRow) {
+            const row = pendingRow as any;
+            const paymentIntent = typeof stripeSession.payment_intent === 'string'
+              ? stripeSession.payment_intent
+              : null;
+
+            // Optimistic lock: no-op if the webhook already transitioned this row
+            // concurrently. The .select('id') check prevents duplicate logPurchaseEvent.
+            const { data: updated } = await supabase
+              .from('purchases')
+              .update({ status: 'completed', stripe_payment_intent: paymentIntent })
+              .eq('id', row.id)
+              .eq('status', 'pending')
+              .select('id');
+
+            if (updated && updated.length > 0) {
+              await logPurchaseEvent({
+                event_type: 'payment_completed',
+                event_source: 'checkout_recovery',
+                purchase_id: row.id,
+                user_id: row.user_id,
+                book_id: row.book_id,
+                stripe_session_id: sessionId,
+                stripe_payment_intent: paymentIntent ?? undefined,
+                previous_status: 'pending',
+                new_status: 'completed',
+                metadata: { recovered_on_success_page: true },
+              });
+            }
+
+            purchase = pendingRow as unknown as Purchase;
+          }
+        }
+      } catch (err: any) {
+        console.error('[succes] Stripe session retrieve failed:', err?.message ?? err);
+        // Degrade gracefully — customer still sees the page without the book card
+      }
+    }
   }
 
   const book = purchase?.book ?? null;
