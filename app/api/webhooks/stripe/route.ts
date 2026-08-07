@@ -27,6 +27,46 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      // VCE editorial service deposit — takes priority, different table entirely
+      if (session.metadata?.vce_commande_id) {
+        const commandeId = session.metadata.vce_commande_id;
+        const auteurId = session.metadata.auteur_id;
+        if (commandeId && auteurId) {
+          const montantPaye = (session.amount_total ?? 0) / 100;
+          const { data: commande, error: selectError } = await supabase
+            .from('vce_commandes_services')
+            .select('montant_total, acompte_paye')
+            .eq('id', commandeId)
+            .single();
+          if (selectError) {
+            console.error('VCE webhook: commande lookup failed:', selectError.message, { commandeId });
+          } else if (commande) {
+            const total = parseFloat(String(commande.montant_total));
+            const dejaPane = parseFloat(String(commande.acompte_paye ?? 0));
+            const nouvelAcompte = dejaPane + montantPaye;
+            const soldeRestant = Math.max(0, total - nouvelAcompte);
+            const { error: updateError } = await supabase
+              .from('vce_commandes_services')
+              .update({ acompte_paye: nouvelAcompte, solde_restant: soldeRestant, statut: 'production' })
+              .eq('id', commandeId);
+            if (updateError) console.error('VCE webhook: commande update failed:', updateError.message, { commandeId });
+            const { error: txError } = await supabase.from('vce_transactions').insert({
+              commande_id: commandeId,
+              auteur_id: auteurId,
+              type_paiement: 'acompte',
+              mode_paiement: 'stripe',
+              montant: montantPaye,
+              stripe_payment_intent_id:
+                typeof session.payment_intent === 'string' ? session.payment_intent : null,
+              statut: 'confirme',
+            });
+            if (txError) console.error('VCE webhook: transaction insert failed:', txError.message, { commandeId });
+          }
+        }
+        break;
+      }
+
       if (session.mode === 'payment' && session.payment_status === 'paid') {
         // Bundle purchase: unlock every book in the pack
         if (session.metadata?.type === 'bundle') {
