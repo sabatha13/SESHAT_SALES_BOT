@@ -28,48 +28,99 @@ export async function POST(req: NextRequest) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
 
-      // VCE editorial service deposit — takes priority, different table entirely
+      // ── VCE editorial service deposit ────────────────────────────────────────
+      // Handled before CDS — different tables entirely.
       if (session.metadata?.vce_commande_id) {
         const commandeId = session.metadata.vce_commande_id;
         const auteurId = session.metadata.auteur_id;
+
         if (commandeId && auteurId) {
+          const paymentIntent =
+            typeof session.payment_intent === 'string' ? session.payment_intent : null;
+
+          // Idempotency guard: payment_intent is unique per payment.
+          // If vce_transactions already has a row for this payment_intent,
+          // this is a Stripe retry — bail out before touching vce_commandes_services.
+          if (paymentIntent) {
+            const { data: existingTx } = await supabase
+              .from('vce_transactions')
+              .select('id')
+              .eq('stripe_payment_intent_id', paymentIntent)
+              .maybeSingle();
+
+            if (existingTx) {
+              console.warn(
+                `[Stripe Webhook] VCE duplicate event ignored — ` +
+                `Session: ${session.id} | Intent: ${paymentIntent} | Commande: ${commandeId}`
+              );
+              break;
+            }
+          }
+
           const montantPaye = (session.amount_total ?? 0) / 100;
+
           const { data: commande, error: selectError } = await supabase
             .from('vce_commandes_services')
             .select('montant_total, acompte_paye')
             .eq('id', commandeId)
             .single();
-          if (selectError) {
-            console.error('VCE webhook: commande lookup failed:', selectError.message, { commandeId });
-          } else if (commande) {
-            const total = parseFloat(String(commande.montant_total));
-            const dejaPane = parseFloat(String(commande.acompte_paye ?? 0));
-            const nouvelAcompte = dejaPane + montantPaye;
-            const soldeRestant = Math.max(0, total - nouvelAcompte);
-            const { error: updateError } = await supabase
-              .from('vce_commandes_services')
-              .update({ acompte_paye: nouvelAcompte, solde_restant: soldeRestant, statut: 'production' })
-              .eq('id', commandeId);
-            if (updateError) console.error('VCE webhook: commande update failed:', updateError.message, { commandeId });
-            const { error: txError } = await supabase.from('vce_transactions').insert({
+
+          if (selectError || !commande) {
+            console.error(
+              '[Stripe Webhook] VCE commande lookup failed:',
+              selectError?.message ?? 'row not found',
+              { commandeId }
+            );
+            break;
+          }
+
+          const total = parseFloat(String(commande.montant_total));
+          const dejaPane = parseFloat(String(commande.acompte_paye ?? 0));
+          const nouvelAcompte = dejaPane + montantPaye;
+          const soldeRestant = Math.max(0, total - nouvelAcompte);
+
+          const { error: updateError } = await supabase
+            .from('vce_commandes_services')
+            .update({ acompte_paye: nouvelAcompte, solde_restant: soldeRestant, statut: 'production' })
+            .eq('id', commandeId);
+
+          if (updateError) {
+            console.error(
+              '[Stripe Webhook] VCE commande update failed:', updateError.message, { commandeId }
+            );
+            break;
+          }
+
+          const { error: txError } = await supabase
+            .from('vce_transactions')
+            .insert({
               commande_id: commandeId,
               auteur_id: auteurId,
               type_paiement: 'acompte',
               mode_paiement: 'stripe',
               montant: montantPaye,
-              stripe_payment_intent_id:
-                typeof session.payment_intent === 'string' ? session.payment_intent : null,
+              stripe_payment_intent_id: paymentIntent,
               statut: 'confirme',
             });
-            if (txError) console.error('VCE webhook: transaction insert failed:', txError.message, { commandeId });
+
+          if (txError) {
+            console.error(
+              '[Stripe Webhook] VCE transaction insert failed:', txError.message, { commandeId }
+            );
+          } else {
+            console.log(
+              `[Stripe Webhook] VCE payment recorded — ` +
+              `Commande: ${commandeId} | Amount: ${montantPaye} | Intent: ${paymentIntent}`
+            );
           }
         }
         break;
       }
 
+      // ── CDS purchase ─────────────────────────────────────────────────────────
       if (session.mode === 'payment' && session.payment_status === 'paid') {
-        // Bundle purchase: unlock every book in the pack
         if (session.metadata?.type === 'bundle') {
+          // Bundle: unlock every book in the pack (already idempotent via status check)
           const { bundleId, userId, bookIds } = session.metadata;
           const ids = (bookIds || '').split(',').filter(Boolean);
           if (userId && ids.length) {
@@ -96,18 +147,40 @@ export async function POST(req: NextRequest) {
             }
           }
         } else {
-          // SELECT and UPDATE run in parallel; SELECT result feeds the audit record only.
-          const [{ data: purchaseRow }, { error: updateError }] = await Promise.all([
-            supabase.from('purchases')
-              .select('id, user_id, book_id')
-              .eq('stripe_session_id', session.id)
-              .maybeSingle(),
-            supabase.from('purchases')
-              .update({ status: 'completed', stripe_payment_intent: session.payment_intent as string })
-              .eq('stripe_session_id', session.id),
-          ]);
-          if (updateError) console.error('Webhook purchase update failed:', updateError.message);
-          if (purchaseRow) {
+          // Single book: idempotent transition pending → completed.
+          //
+          // The WHERE status='pending' clause is the optimistic lock:
+          //   - First delivery: matches the pending row, transitions it, returns 1 row.
+          //   - Stripe retry / success-page race: row is already completed, 0 rows returned.
+          //     logPurchaseEvent is NOT called — no duplicate event, no duplicate update.
+          //
+          // The additional DB-level guard is idx_purchase_events_stripe_event_id
+          // (unique on metadata->>'stripe_event_id') which silently absorbs the
+          // rare case where two deliveries race past the app-level check.
+          const { data: updated, error: updateError } = await supabase
+            .from('purchases')
+            .update({
+              status: 'completed',
+              stripe_payment_intent: session.payment_intent as string,
+            })
+            .eq('stripe_session_id', session.id)
+            .eq('status', 'pending')
+            .select('id, user_id, book_id');
+
+          if (updateError) {
+            console.error(
+              '[Stripe Webhook] Purchase update failed:', updateError.message, { session: session.id }
+            );
+          } else if (!updated || updated.length === 0) {
+            console.warn(
+              `[Stripe Webhook] Session: ${session.id} — ` +
+              `Purchase already completed or not found. No state transition performed.`
+            );
+          } else {
+            const purchaseRow = updated[0];
+            console.log(
+              `[Stripe Webhook] Session: ${session.id} — Purchase ${purchaseRow.id} pending → completed.`
+            );
             await logPurchaseEvent({
               event_type: 'payment_completed',
               event_source: 'webhook',
@@ -123,6 +196,7 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+
       if (session.mode === 'subscription' && session.subscription) {
         const { userId, planId } = session.metadata || {};
         if (userId && planId) {
@@ -148,16 +222,25 @@ export async function POST(req: NextRequest) {
     case 'charge.refunded': {
       const charge = event.data.object as Stripe.Charge;
       if (charge.payment_intent) {
-        const [{ data: purchaseRow }] = await Promise.all([
-          supabase.from('purchases')
-            .select('id, user_id, book_id')
-            .eq('stripe_payment_intent', charge.payment_intent as string)
-            .maybeSingle(),
-          supabase.from('purchases')
-            .update({ status: 'refunded' })
-            .eq('stripe_payment_intent', charge.payment_intent as string),
-        ]);
-        if (purchaseRow) {
+        // Status guard: only update rows that are currently 'completed'.
+        // On Stripe retry the row is already 'refunded' — 0 rows returned,
+        // logPurchaseEvent is skipped. No duplicate events.
+        const { data: updated, error: updateError } = await supabase
+          .from('purchases')
+          .update({ status: 'refunded' })
+          .eq('stripe_payment_intent', charge.payment_intent as string)
+          .eq('status', 'completed')
+          .select('id, user_id, book_id');
+
+        if (updateError) {
+          console.error('[Stripe Webhook] Refund update failed:', updateError.message);
+        } else if (!updated || updated.length === 0) {
+          console.warn(
+            `[Stripe Webhook] Refund: purchase not found or already refunded. ` +
+            `PaymentIntent: ${charge.payment_intent}`
+          );
+        } else {
+          const purchaseRow = updated[0];
           await logPurchaseEvent({
             event_type: 'payment_refunded',
             event_source: 'webhook',
